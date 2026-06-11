@@ -3,12 +3,11 @@ import { connectDatabase } from './config/database.js';
 import { PORT } from './config/env.js';
 
 async function startServer() {
-    app.listen(PORT, async () => {
-        await connectDatabase();
+    await connectDatabase();
+    app.listen(PORT, () => {
         console.log(`[server]: Running on port ${PORT}`)
     });
 }
-
 
 startServer().catch((err) => {
     console.error("Error starting server", err);
