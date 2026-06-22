@@ -3,6 +3,10 @@ import userRouter from './routers/user.router.js';
 
 const app: Express = express();
 
+app.use(express.json()); // deserialize json body to javascript object.
+app.use(express.text()); 
+app.use(express.urlencoded({ extended: true }));
+
 app.get('/health', (_req, res) => {
   res.json({
     status: 'ok!',
@@ -11,6 +15,6 @@ app.get('/health', (_req, res) => {
 
 });
 
-app.use("/users", userRouter);
+app.use("/api/users", userRouter);
 
 export { app };
