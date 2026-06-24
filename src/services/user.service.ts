@@ -1,5 +1,11 @@
-import { getAll, getById } from "../repositories/user.repository.js";
-import { notFound } from "../utils/api-error.js";
+import { CreateUserDto } from "../dtos/user.dto.js";
+import {
+    create,
+    findByEmail,
+    getAll,
+    getById,
+} from "../repositories/user.repository.js";
+import { conflict, notFound } from "../utils/api-error.js";
 
 export async function findAllUsers() {
     const users = await getAll();
@@ -12,4 +18,14 @@ export async function findUserById(id: number) {
         throw notFound("User not found");
     }
     return user;
+}
+
+export async function createNewUser(data: CreateUserDto) {
+    const existingUser = await findByEmail(data.email);
+
+    if (existingUser) {
+        throw conflict("User already exists");
+    }
+
+    return create(data);
 }
