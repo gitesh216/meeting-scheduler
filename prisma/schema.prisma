@@ -29,7 +29,7 @@ model EventType {
   id                  Int      @id @default(autoincrement())
   hostId              Int
   title               String
-  description         String
+  description         String?
   slug                String
   durationMinutes     Int
   isActive            Boolean  @default(true)
