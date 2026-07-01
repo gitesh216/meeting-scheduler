@@ -27,7 +27,10 @@ export async function findById(id: number) {
     return eventType;
 }
 
-export async function create(hostId: number, data: CreateEventTypeDto & {slug: string}) {
+export async function create(
+    hostId: number,
+    data: CreateEventTypeDto & { slug: string },
+) {
     const eventType = await prisma.eventType.create({
         data: {
             hostId,
@@ -80,4 +83,19 @@ export async function slugExistsForHost(hostId: number, slug: string) {
     });
 
     return eventType !== null;
+}
+
+export async function findActiveByHostIdAndEventSlug(
+    hostId: number,
+    eventSlug: string,
+) {
+    const eventType = await prisma.eventType.findFirst({
+        where: {
+            hostId,
+            slug: eventSlug,
+            isActive: true,
+        },
+    });
+
+    return eventType;
 }
