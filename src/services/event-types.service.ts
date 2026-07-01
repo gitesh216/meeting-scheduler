@@ -1,4 +1,7 @@
-import { CreateEventTypeDto } from "../dtos/event-type.dto.js";
+import {
+    CreateEventTypeDto,
+    UpdateEventTypeDto,
+} from "../dtos/event-type.dto.js";
 import {
     create,
     findActiveByHostIdAndEventSlug,
@@ -6,6 +9,7 @@ import {
     findById,
     remove,
     slugExistsForHost,
+    update,
 } from "../repositories/event-type.repository.js";
 import { getById } from "../repositories/user.repository.js";
 import { conflict, forbidden, notFound } from "../utils/api-error.js";
@@ -87,4 +91,29 @@ export async function getEventTypePublic(hostId: number, eventSlug: string) {
             email: host.email,
         },
     };
+}
+
+export async function updateEventType(
+    hostId: number,
+    id: number,
+    data: UpdateEventTypeDto,
+) {
+    const eventType = await findById(id);
+    if (!eventType) {
+        throw notFound("Event type not found");
+    }
+
+    if (eventType.hostId !== hostId) {
+        throw forbidden("You are not authorized to update this event type");
+    }
+
+    if (data.slug && data.slug !== eventType.slug) {
+        const isSlugTaken = await slugExistsForHost(hostId, data.slug);
+        if (isSlugTaken) {
+            throw conflict(
+                "A event type with this slug already exists, plase use a different slug",
+            );
+        }
+    }
+    return update(id, data);
 }
