@@ -17,6 +17,8 @@ model User {
   email     String   @unique
   name      String
   password  String
+  slug      String   @unique
+  timezone  String   @default("UTC")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
