@@ -2,7 +2,6 @@ import { CreateEventTypeDto } from "../dtos/event-type.dto.js";
 import {
     create,
     findActiveByHostIdAndEventSlug,
-    findByHostAndSlug,
     findByHostId,
     findById,
     remove,
@@ -48,6 +47,19 @@ export async function removeEventType(hostId: number, id: number) {
         throw forbidden("You are not authorized delete this event type");
     }
     return remove(id);
+}
+
+export async function getEventTypeById(id: number, hostId: number) {
+    const eventType = await findById(id);
+    if (!eventType) {
+        throw notFound("Event type not found");
+    }
+
+    if (eventType.hostId !== hostId) {
+        throw forbidden("You are not authorized to view this event type");
+    }
+
+    return eventType;
 }
 
 export async function getEventTypePublic(hostId: number, eventSlug: string) {
