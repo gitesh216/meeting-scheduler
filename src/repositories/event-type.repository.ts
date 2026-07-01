@@ -27,7 +27,7 @@ export async function findById(id: number) {
     return eventType;
 }
 
-export async function create(hostId: number, data: CreateEventTypeDto) {
+export async function create(hostId: number, data: CreateEventTypeDto & {slug: string}) {
     const eventType = await prisma.eventType.create({
         data: {
             hostId,
