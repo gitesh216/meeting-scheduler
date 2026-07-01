@@ -22,7 +22,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  eventTypes EventType[]
+  eventTypes        EventType[]
+  availabilityRules AvailabilityRule[]
 
   @@map("users")
 }
@@ -46,4 +47,20 @@ model EventType {
 
   @@unique([hostId, slug])
   @@map("event_types")
+}
+
+model AvailabilityRule {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  weekday   Int
+  startTime String
+  endTime   String
+  timezone  String   @default("UTC")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, weekday])
+  @@map("availability_rules")
 }
