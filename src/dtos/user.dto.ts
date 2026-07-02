@@ -9,6 +9,15 @@ export const createUserSchema = z.object({
         .max(50, "Name must be at most 50 characters long"),
 
     password: z.string().min(6, "Password must be at least 6 characters long"),
+    slug: z
+        .string()
+        .min(1)
+        .max(100)
+        .regex(
+            /^[a-z0-9-]+$/,
+            "Slug may only contain lowercase letters, numbers, and hyphens",
+        )
+        .optional(),
 });
 
 export const updateUserSchema = z

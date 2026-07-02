@@ -8,6 +8,7 @@ import {
     update,
 } from "../repositories/user.repository.js";
 import { conflict, notFound } from "../utils/api-error.js";
+import slug from "slug";
 
 export async function findAllUsers() {
     const users = await getAll();
@@ -28,8 +29,10 @@ export async function createNewUser(data: CreateUserDto) {
     if (existingUser) {
         throw conflict("User already exists");
     }
+    const unique_slug_data = data.name + data.email;
+    const user_slug = data.slug ?? slug(unique_slug_data, { lower: true });
 
-    return create(data);
+    return create({ ...data, slug: user_slug });
 }
 
 export async function updateUser(id: number, data: UpdateUserDto) {
