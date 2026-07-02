@@ -14,6 +14,8 @@ import {
 import { getById } from "../repositories/user.repository.js";
 import { conflict, forbidden, notFound } from "../utils/api-error.js";
 import slug from "slug";
+import { idGenerator } from "../utils/ids.js";
+import { encodeBase62 } from "../utils/id-generator.js";
 
 export async function listEventTypes(hostId: number) {
     const eventTypes = await findByHostId(hostId);
@@ -27,11 +29,19 @@ export async function createEventType(
     hostId: number,
     data: CreateEventTypeDto,
 ) {
-    const eventSlug = data.slug ?? slug(data.title, { lower: true });
+    const baseSlug = data.slug ?? slug(data.title, { lower: true });
 
-    if (!eventSlug) {
+    if (!baseSlug) {
         throw conflict("Event slug not found");
     }
+    // Generate a globally unique ID
+    const id = idGenerator.generate();
+
+    // Convert to a short URL-friendly string
+    const shortId = encodeBase62(id);
+
+    // Final slug
+    const eventSlug = `${baseSlug}-${shortId}`;
 
     const isSlugTaken = await slugExistsForHost(hostId, eventSlug);
 
