@@ -9,6 +9,8 @@ import {
 } from "../repositories/user.repository.js";
 import { conflict, notFound } from "../utils/api-error.js";
 import slug from "slug";
+import { idGenerator } from "../utils/ids.js";
+import { encodeBase62 } from "../utils/id-generator.js";
 
 export async function findAllUsers() {
     const users = await getAll();
@@ -29,10 +31,18 @@ export async function createNewUser(data: CreateUserDto) {
     if (existingUser) {
         throw conflict("User already exists");
     }
-    const unique_slug_data = data.name + data.email;
-    const user_slug = data.slug ?? slug(unique_slug_data, { lower: true });
 
-    return create({ ...data, slug: user_slug });
+    const baseSlug = data.slug ?? slug(data.name, { lower: true });
+
+    if (!baseSlug) {
+        throw conflict("User slug not found");
+    }
+
+    const id = idGenerator.generate();
+    const shortId = encodeBase62(id);
+    const userSlug = `${baseSlug}-${shortId}`;
+
+    return create({ ...data, slug: userSlug });
 }
 
 export async function updateUser(id: number, data: UpdateUserDto) {
