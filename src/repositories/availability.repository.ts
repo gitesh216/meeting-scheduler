@@ -3,6 +3,7 @@ import {
     CreateAvailabilityExceptionDto,
     CreateAvailabilityRuleDto,
     UpdateAvailabilityRuleDto,
+    UpdateAvailabilityExceptionDto,
 } from "../dtos/availability.dto.js";
 
 export async function findRulesByUser(userId: number) {
@@ -101,6 +102,22 @@ export async function createException(
         },
     });
     return newException;
+}
+
+export async function updateException(
+    id: number,
+    data: UpdateAvailabilityExceptionDto,
+) {
+    const { date, ...restData } = data;
+    return prisma.availabilityException.update({
+        where: { id },
+        data: {
+            ...restData,
+            ...(date !== undefined && {
+                date: new Date(`${date}T00:00:00.000Z`),
+            }),
+        },
+    });
 }
 
 export async function removeException(id: number) {
