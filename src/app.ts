@@ -4,6 +4,7 @@ import { errorHandler } from './middlewares/error-handler.js';
 import { routeNotFound } from './middlewares/route-not-found.js';
 import { eventTypeRouter } from './routers/event-type.router.js';
 import { publicEventRouter } from './routers/public-event-type.router.js';
+import { availabilityRouter } from './routers/availability.router.js';
 
 const app: Express = express();
 
@@ -21,6 +22,7 @@ app.get('/health', (_req, res) => {
 
 app.use("/api/users", userRouter);
 app.use("/api/event-types", eventTypeRouter);
+app.use('/api/availability', availabilityRouter);
 app.use('/api/public', publicEventRouter);
 
 app.use(routeNotFound);
