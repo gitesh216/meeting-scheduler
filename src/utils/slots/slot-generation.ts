@@ -154,3 +154,27 @@ export function applyExceptionsForDate(
 
     return mergeWindows(windows);
 }
+
+export function windowsForWeekDayRul(
+    date: DateTime,
+    weekDay: number,
+    startTime: string,
+    endTime: string,
+    timeZone: string,
+): TimeWindow[] {
+    const localDate = date.setZone(timeZone).startOf("day");
+    const luxonWeekDay = weekDay === 0 ? 7 : weekDay;
+
+    if (localDate.weekday !== luxonWeekDay) {
+        return [];
+    }
+
+    const start = parseTimeOnDate(localDate, startTime, timeZone);
+    const end = parseTimeOnDate(localDate, endTime, timeZone);
+
+    if (!start.isValid || !end.isValid || start >= end) {
+        return [];
+    }
+
+    return [{ start, end }];
+}
