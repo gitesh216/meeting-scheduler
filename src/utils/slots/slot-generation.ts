@@ -122,7 +122,7 @@ export function applyExceptionsForDate(
     date: DateTime,
     baseWindows: TimeWindow[],
     exceptions: Array<{
-        type: "BLOCK_FULL_DAY" | "BLOCK_PARTIAL" | "ADD_AVAILABLE_WINDOW";
+        type: string;
         startTime: string | null;
         endTime: string | null;
         timeZone: string;
@@ -157,13 +157,13 @@ export function applyExceptionsForDate(
 
 export function windowsForWeekDayRul(
     date: DateTime,
-    weekDay: number,
+    weekday: number,
     startTime: string,
     endTime: string,
     timeZone: string,
 ): TimeWindow[] {
     const localDate = date.setZone(timeZone).startOf("day");
-    const luxonWeekDay = weekDay === 0 ? 7 : weekDay;
+    const luxonWeekDay = weekday === 0 ? 7 : weekday;
 
     if (localDate.weekday !== luxonWeekDay) {
         return [];
