@@ -62,6 +62,8 @@ export async function generateHostSlots(input: RegenerateHostSlotsInput) {
     });
 
     for (const eventType of eventTypes) {
+        const generatedValidSlotsKeys = new Set<string>();
+
         for (
             let cursor = from;
             cursor <= to;
@@ -125,6 +127,8 @@ export async function generateHostSlots(input: RegenerateHostSlotsInput) {
 
                 const key = `${eventType.id}|${startAt.toISOString()}|${endAt.toISOString()}`;
 
+                generatedValidSlotsKeys.add(key);
+
                 await prisma.slot.upsert({
                     where: {
                         eventTypeId_startAt_endAt: {
@@ -142,6 +146,33 @@ export async function generateHostSlots(input: RegenerateHostSlotsInput) {
                     },
                     update: {
                         status: "AVAILABLE",
+                    },
+                });
+            }
+        }
+
+        const futureSlots = await prisma.slot.findMany({
+            where: {
+                eventTypeId: eventType.id,
+                startAt: {
+                    gte: from.toJSDate(),
+                    lte: to.toJSDate(),
+                },
+                status: {
+                    in: ["AVAILABLE", "BLOCKED"],
+                },
+            },
+        });
+
+        for (const slot of futureSlots) {
+            const key = `${eventType.id}|${slot.startAt.toISOString()}|${slot.endAt.toISOString()}`;
+            if (!generatedValidSlotsKeys.has(key)) {
+                await prisma.slot.update({
+                    where: {
+                        id: slot.id,
+                    },
+                    data: {
+                        status: "BLOCKED",
                     },
                 });
             }
