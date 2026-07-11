@@ -89,6 +89,7 @@ export function subtractWindows(
 
         if (!interval.overlaps(blockInterval)) {
             result.push(window);
+            continue;
         }
 
         if (block.start > window.start) {
