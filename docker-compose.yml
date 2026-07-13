@@ -1,7 +1,7 @@
 services:
     temporal:
         image: temporalio/auto-setup:1.25.2
-        extra_host:
+        extra_hosts:
             - "host.docker.internal:host-gateway"
         environment:
             DB: postgres12
@@ -9,7 +9,7 @@ services:
             POSTGRES_USER: giteshuser
             POSTGRES_PWD: mysecretpassword
             POSTGRES_SEEDS: host.docker.internal
-            DYNAMIC_CONFIG_FILE_PATH: config/dynamicConfig/development-sql.yaml
+            DYNAMIC_CONFIG_FILE_PATH: config/dynamicconfig/development-sql.yaml
         ports:
             - "7233:7233"
         volumes:
