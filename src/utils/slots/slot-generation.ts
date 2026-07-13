@@ -156,7 +156,7 @@ export function applyExceptionsForDate(
     return mergeWindows(windows);
 }
 
-export function windowsForWeekDayRul(
+export function windowsForWeekDayRule(
     date: DateTime,
     weekday: number,
     startTime: string,

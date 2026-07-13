@@ -10,7 +10,7 @@ import { findBookedSlotsByHostInRange } from "../repositories/slot.repository.js
 import {
     applyExceptionsForDate,
     TimeWindow,
-    windowsForWeekDayRul,
+    windowsForWeekDayRule,
     splitIntoSlots,
     overlapsBooked,
 } from "../utils/slots/slot-generation.js";
@@ -89,7 +89,7 @@ export async function generateHostSlots(input: RegenerateHostSlotsInput) {
 
             for (const rule of rules) {
                 windows.push(
-                    ...windowsForWeekDayRul(
+                    ...windowsForWeekDayRule(
                         cursor,
                         rule.weekday,
                         rule.startTime,
