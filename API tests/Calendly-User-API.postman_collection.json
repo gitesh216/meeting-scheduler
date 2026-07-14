@@ -1,0 +1,320 @@
+{
+    "info": {
+        "name": "Calendly Clone - User API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000",
+            "type": "string"
+        },
+        {
+            "key": "userId",
+            "value": "1",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Get All Users",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/api/users",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "users"]
+                }
+            }
+        },
+        {
+            "name": "Get User by ID",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/api/users/{{userId}}",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "users", "{{userId}}"]
+                }
+            }
+        },
+        {
+            "name": "Create User (Valid)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"name\": \"John Doe\",\n  \"password\": \"password123\",\n  \"slug\": \"john-doe\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/users",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "users"]
+                }
+            }
+        },
+        {
+            "name": "Create User (Minimal - Auto Slug)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"jane.smith@example.com\",\n  \"name\": \"Jane Smith\",\n  \"password\": \"securepass456\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/users",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "users"]
+                }
+            }
+        },
+        {
+            "name": "Create User (Invalid Email)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"not-an-email\",\n  \"name\": \"Test User\",\n  \"password\": \"password123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/users",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "users"]
+                }
+            }
+        },
+        {
+            "name": "Create User (Short Name)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"test@example.com\",\n  \"name\": \"A\",\n  \"password\": \"password123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/users",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "users"]
+                }
+            }
+        },
+        {
+            "name": "Create User (Short Password)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"test@example.com\",\n  \"name\": \"Test User\",\n  \"password\": \"123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/users",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "users"]
+                }
+            }
+        },
+        {
+            "name": "Create User (Invalid Slug)",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"test@example.com\",\n  \"name\": \"Test User\",\n  \"password\": \"password123\",\n  \"slug\": \"Invalid_Slug!\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/users",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "users"]
+                }
+            }
+        },
+        {
+            "name": "Create Duplicate User",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"duplicate@example.com\",\n  \"name\": \"Duplicate User\",\n  \"password\": \"password123\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/users",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "users"]
+                }
+            }
+        },
+        {
+            "name": "Update User (Full)",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"john.doe.updated@example.com\",\n  \"name\": \"John Doe Updated\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/users/{{userId}}",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "users", "{{userId}}"]
+                }
+            }
+        },
+        {
+            "name": "Update User (Email Only)",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"email\": \"new.email@example.com\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/users/{{userId}}",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "users", "{{userId}}"]
+                }
+            }
+        },
+        {
+            "name": "Update User (Name Only)",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"name\": \"New Name Only\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/users/{{userId}}",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "users", "{{userId}}"]
+                }
+            }
+        },
+        {
+            "name": "Update User (Invalid - Empty)",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/users/{{userId}}",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "users", "{{userId}}"]
+                }
+            }
+        },
+        {
+            "name": "Update Non-existent User",
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"name\": \"Non Existent\"\n}"
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/api/users/999999",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "users", "999999"]
+                }
+            }
+        },
+        {
+            "name": "Delete User",
+            "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/api/users/{{userId}}",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "users", "{{userId}}"]
+                }
+            }
+        },
+        {
+            "name": "Delete Non-existent User",
+            "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/api/users/999999",
+                    "host": ["{{baseUrl}}"],
+                    "path": ["api", "users", "999999"]
+                }
+            }
+        }
+    ]
+}

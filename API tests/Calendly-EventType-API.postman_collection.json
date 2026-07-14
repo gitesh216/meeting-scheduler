@@ -1,0 +1,293 @@
+{
+  "info": {
+    "name": "Calendly Clone - Event Type API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "eventTypeId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Event Types",
+      "item": [
+        {
+          "name": "List All Event Types",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/event-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "event-types"]
+            }
+          }
+        },
+        {
+          "name": "Get Event Type by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/event-types/{{eventTypeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "event-types", "{{eventTypeId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Event Type (Valid - Full)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"30 Minute Meeting\",\n  \"description\": \"A standard 30-minute meeting for quick discussions\",\n  \"durationMinutes\": 30,\n  \"isActive\": true,\n  \"locationType\": \"online\",\n  \"locationValue\": \"https://calendly.com/meeting\",\n  \"bufferBeforeMinutes\": 5,\n  \"bufferAfterMinutes\": 10,\n  \"slug\": \"30-min-meeting\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/event-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "event-types"]
+            }
+          }
+        },
+        {
+          "name": "Create Event Type (Valid - Minimal)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"15 Min Quick Call\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/event-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "event-types"]
+            }
+          }
+        },
+        {
+          "name": "Create Event Type (Valid - In-Person)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"1 Hour In-Person Consultation\",\n  \"description\": \"Face-to-face consultation at office\",\n  \"durationMinutes\": 60,\n  \"locationType\": \"in-person\",\n  \"locationValue\": \"123 Main St, Conference Room A\",\n  \"bufferBeforeMinutes\": 10,\n  \"bufferAfterMinutes\": 15\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/event-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "event-types"]
+            }
+          }
+        },
+        {
+          "name": "Create Event Type (Valid - With Custom Slug)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Discovery Call\",\n  \"durationMinutes\": 45,\n  \"slug\": \"discovery-call\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/event-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "event-types"]
+            }
+          }
+        },
+        {
+          "name": "Update Event Type (Full)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated 30 Minute Meeting\",\n  \"description\": \"Updated description for the meeting\",\n  \"durationMinutes\": 45,\n  \"isActive\": false,\n  \"locationType\": \"in-person\",\n  \"locationValue\": \"New location\",\n  \"bufferBeforeMinutes\": 10,\n  \"bufferAfterMinutes\": 15,\n  \"slug\": \"updated-meeting\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/event-types/{{eventTypeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "event-types", "{{eventTypeId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Event Type (Title Only)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"New Title Only\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/event-types/{{eventTypeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "event-types", "{{eventTypeId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Event Type (Deactivate)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/event-types/{{eventTypeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "event-types", "{{eventTypeId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Event Type (Change Duration)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"durationMinutes\": 60\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/event-types/{{eventTypeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "event-types", "{{eventTypeId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Event Type",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/event-types/{{eventTypeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "event-types", "{{eventTypeId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
