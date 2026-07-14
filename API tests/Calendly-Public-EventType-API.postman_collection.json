@@ -1,0 +1,180 @@
+{
+  "info": {
+    "name": "Calendly Clone - Public Event Type API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "slug",
+      "value": "30-min-meeting-x7k9m2",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Public Event Types",
+      "item": [
+        {
+          "name": "Get Public Event Type (Valid)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}/event-types/{{slug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{userId}}",
+                "event-types",
+                "{{slug}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Public Event Type (Non-existent User - 404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/999999/event-types/{{slug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "999999",
+                "event-types",
+                "{{slug}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Public Event Type (Non-existent Slug - 404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}/event-types/non-existent-slug",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{userId}}",
+                "event-types",
+                "non-existent-slug"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Public Event Type (Invalid User ID Format - 400)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/invalid/event-types/{{slug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "invalid",
+                "event-types",
+                "{{slug}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Public Event Type (Inactive Event Type - 404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}/event-types/inactive-event-slug",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{userId}}",
+                "event-types",
+                "inactive-event-slug"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Public Event Type (Different User)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/2/event-types/discovery-call-abc123",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "2",
+                "event-types",
+                "discovery-call-abc123"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
