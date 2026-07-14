@@ -18,6 +18,9 @@ export async function findAllUsers() {
 }
 
 export async function findUserById(id: number) {
+    if(!id) {
+        throw notFound("Invalid ID");
+    }
     const user = await getById(id);
     if (!user) {
         throw notFound("User not found");

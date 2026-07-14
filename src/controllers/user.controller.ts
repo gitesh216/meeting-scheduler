@@ -14,9 +14,8 @@ export async function findAllUsers(_req: Request, res: Response) {
 }
 
 export async function findById(req: Request, res: Response) {
-    const { userId } = req.params;
-
-    const user = await findUserByIdService(Number(userId));
+    const { id } = req.params;
+    const user = await findUserByIdService(Number(id));
     sendSuccess(res, user);
 }
 
