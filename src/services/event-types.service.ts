@@ -16,6 +16,7 @@ import { conflict, forbidden, notFound } from "../utils/api-error.js";
 import slug from "slug";
 import { idGenerator } from "../utils/ids.js";
 import { encodeBase62 } from "../utils/id-generator.js";
+import { startRegenerateHostSlotsWorkflow } from "../temporal/client.js";
 
 export async function listEventTypes(hostId: number) {
     const eventTypes = await findByHostId(hostId);
@@ -49,7 +50,9 @@ export async function createEventType(
         throw conflict("Event slug already exists");
     }
 
-    return create(hostId, { ...data, slug: eventSlug });
+    const eventType = create(hostId, {...data, slug: eventSlug});
+    await startRegenerateHostSlotsWorkflow({ hostId });
+    return eventType;
 }
 
 export async function removeEventType(hostId: number, id: number) {
