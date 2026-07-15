@@ -26,7 +26,11 @@ export async function createRule(
 }
 
 export async function listRules(userId: number) {
-    return findRulesByUser(userId);
+    const rules = await findRulesByUser(userId);
+    if(!rules) {
+        throw notFound("Rules not found");
+    }
+    return rules; 
 }
 
 export async function updateRule(
