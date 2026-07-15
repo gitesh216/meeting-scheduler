@@ -10,7 +10,7 @@ export function errorHandler(
 ) {
     if (err instanceof ApiError) {
         const body: Record<string, unknown> = {
-            sucess: false,
+            success: false,
             message: err.message,
         };
         if (err.details) {
@@ -21,7 +21,7 @@ export function errorHandler(
     }
     console.error("Error in error handler", err);
     const body: Record<string, unknown> = {
-        sucess: false,
+        success: false,
         message: "Something went wrong",
     };
     if (NODE_ENV === "development") {
