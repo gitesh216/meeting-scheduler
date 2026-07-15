@@ -57,6 +57,21 @@ export const createAvailabilityExceptionSchema = z
         reason: z.string().max(500).optional(),
     })
     .superRefine((data, ctx) => {
+        // Validate that the date is actually valid (not just format)
+        const dateObj = new Date(`${data.date}T00:00:00.000Z`);
+        const [year, month, day] = data.date.split("-").map(Number);
+        if (
+            dateObj.getUTCFullYear() !== year ||
+            dateObj.getUTCMonth() + 1 !== month ||
+            dateObj.getUTCDate() !== day
+        ) {
+            ctx.addIssue({
+                path: ["date"],
+                code: "custom",
+                message: "Invalid date",
+            });
+        }
+
         if (data.type !== "BLOCK_FULL_DAY") {
             if (!data.startTime) {
                 ctx.addIssue({
@@ -88,8 +103,63 @@ export const createAvailabilityExceptionSchema = z
         }
     });
 
-export const updateAvailabilityExceptionSchema =
-    availabilityExceptionBaseSchema.partial();
+export const updateAvailabilityExceptionSchema = availabilityExceptionBaseSchema
+    .partial()
+    .superRefine((data, ctx) => {
+        // Validate that the date is actually valid (not just format) if provided
+        if (data.date) {
+            const dateObj = new Date(`${data.date}T00:00:00.000Z`);
+            const [year, month, day] = data.date.split("-").map(Number);
+            if (
+                dateObj.getUTCFullYear() !== year ||
+                dateObj.getUTCMonth() + 1 !== month ||
+                dateObj.getUTCDate() !== day
+            ) {
+                ctx.addIssue({
+                    path: ["date"],
+                    code: "custom",
+                    message: "Invalid date",
+                });
+            }
+        }
+
+        // Validate time ordering for partial updates
+        if (
+            data.startTime &&
+            data.endTime &&
+            data.startTime >= data.endTime
+        ) {
+            ctx.addIssue({
+                path: ["endTime"],
+                code: "custom",
+                message: "End time must be after start time",
+            });
+        }
+
+        // If type is being changed to non-BLOCK_FULL_DAY, ensure times are provided
+        if (
+            data.type &&
+            data.type !== "BLOCK_FULL_DAY" &&
+            (!data.startTime || !data.endTime)
+        ) {
+            if (!data.startTime) {
+                ctx.addIssue({
+                    path: ["startTime"],
+                    code: "custom",
+                    message:
+                        "Start time is required for a non-full day exception",
+                });
+            }
+            if (!data.endTime) {
+                ctx.addIssue({
+                    path: ["endTime"],
+                    code: "custom",
+                    message:
+                        "End time is required for a non-full day exception",
+                });
+            }
+        }
+    });
 
 export type CreateAvailabilityRuleDto = z.infer<
     typeof createAvailabilityRuleSchema
