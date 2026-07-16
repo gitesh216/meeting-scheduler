@@ -16,13 +16,16 @@ import {
     updateException as updateExceptionRepo,
     updateRule as updateRuleRepo,
 } from "../repositories/availability.repository.js";
+import { startRegenerateHostSlotsWorkflow } from "../temporal/client.js";
 import { forbidden, notFound } from "../utils/api-error.js";
 
 export async function createRule(
     userId: number,
     data: CreateAvailabilityRuleDto,
 ) {
-    return createRuleRepo(userId, data);
+    const createdRule = await createRuleRepo(userId, data);
+    await startRegenerateHostSlotsWorkflow({ hostId: createdRule.userId });
+    return createdRule;
 }
 
 export async function listRules(userId: number) {
@@ -48,7 +51,9 @@ export async function updateRule(
         );
     }
 
-    return updateRuleRepo(ruleId, data);
+    const updatedRule = await updateRuleRepo(ruleId, data);
+    await startRegenerateHostSlotsWorkflow({ hostId: updatedRule.userId });
+    return updatedRule;
 }
 
 export async function removeRule(userId: number, ruleId: number) {
@@ -62,14 +67,18 @@ export async function removeRule(userId: number, ruleId: number) {
         );
     }
 
-    return removeRuleRepo(ruleId);
+    const removedRule = await removeRuleRepo(ruleId);
+    await startRegenerateHostSlotsWorkflow({ hostId: removedRule.userId });
+    return removedRule;
 }
 
 export async function createException(
     userId: number,
     data: CreateAvailabilityExceptionDto,
 ) {
-    return createExceptionRepo(userId, data);
+    const createdException = await createExceptionRepo(userId, data);
+    await startRegenerateHostSlotsWorkflow({ hostId: createdException.userId });
+    return createdException;
 }
 
 export async function listExceptions(userId: number) {
@@ -91,7 +100,10 @@ export async function updateException(
         );
     }
 
-    return updateExceptionRepo(exceptionId, data);
+    const updatedException = await updateExceptionRepo(exceptionId, data);
+    await startRegenerateHostSlotsWorkflow({ hostId: updatedException.userId });
+    
+    return updatedException;
 }
 
 export async function removeException(userId: number, exceptionId: number) {
@@ -105,5 +117,7 @@ export async function removeException(userId: number, exceptionId: number) {
         );
     }
 
-    return removeExceptionRepo(exceptionId);
+    const removedException = await removeExceptionRepo(exceptionId);
+    await startRegenerateHostSlotsWorkflow({ hostId: removedException.userId });
+    return removedException;
 }
