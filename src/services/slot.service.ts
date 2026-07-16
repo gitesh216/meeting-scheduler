@@ -33,12 +33,12 @@ export async function generateHostSlots(input: RegenerateHostSlotsInput) {
     }
 
     const from = input.from
-        ? DateTime.fromISO(input.from)
-        : DateTime.now().startOf("day");
+        ? DateTime.fromISO(input.from, { zone: "utc" }).startOf("day")
+        : DateTime.now().startOf("day").toUTC();
 
     const to = input.to
-        ? DateTime.fromISO(input.to)
-        : DateTime.now().plus({ days: 30 }).endOf("day");
+        ? DateTime.fromISO(input.to, { zone: "utc" }).endOf("day")
+        : DateTime.now().plus({ days: 30 }).endOf("day").toUTC();
 
     const [rules, exceptions, eventTypes, bookedSlots] = await Promise.all([
         findActiveRulesByUser(input.hostId),
