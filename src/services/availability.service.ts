@@ -30,10 +30,10 @@ export async function createRule(
 
 export async function listRules(userId: number) {
     const rules = await findRulesByUser(userId);
-    if(!rules) {
+    if (!rules) {
         throw notFound("Rules not found");
     }
-    return rules; 
+    return rules;
 }
 
 export async function updateRule(
@@ -102,7 +102,7 @@ export async function updateException(
 
     const updatedException = await updateExceptionRepo(exceptionId, data);
     await startRegenerateHostSlotsWorkflow({ hostId: updatedException.userId });
-    
+
     return updatedException;
 }
 

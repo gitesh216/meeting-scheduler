@@ -50,7 +50,7 @@ export async function createEventType(
         throw conflict("Event slug already exists");
     }
 
-    const eventType = create(hostId, {...data, slug: eventSlug});
+    const eventType = create(hostId, { ...data, slug: eventSlug });
     await startRegenerateHostSlotsWorkflow({ hostId });
     return eventType;
 }
@@ -63,7 +63,9 @@ export async function removeEventType(hostId: number, id: number) {
     if (eventType.hostId !== hostId) {
         throw forbidden("You are not authorized delete this event type");
     }
-    return remove(id);
+    const removedEventType = await remove(id);
+    await startRegenerateHostSlotsWorkflow({ hostId });
+    return removedEventType;
 }
 
 export async function getEventTypeById(id: number, hostId: number) {
@@ -128,5 +130,7 @@ export async function updateEventType(
             );
         }
     }
-    return update(id, data);
+    const updatedEventType = await update(id, data);
+    await startRegenerateHostSlotsWorkflow({ hostId });
+    return updatedEventType;
 }
