@@ -1,4 +1,4 @@
-import { getDbClient, type DbClient } from "./db-client.js";
+import { getDbClient, type DbClient } from "../config/db-client.js";
 
 export interface CreateBookingData {
     slotId: string;
