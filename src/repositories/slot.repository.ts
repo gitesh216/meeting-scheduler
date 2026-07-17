@@ -1,4 +1,5 @@
 import { prisma } from "../config/database.js";
+import { getDbClient, type DbClient } from "../config/db-client.js";
 
 export async function findBookedSlotsByHostInRange(
     hostId: number,
@@ -74,4 +75,56 @@ export async function blockSlot(id: string) {
         },
     });
     return slot;
+}
+
+export async function findSlotById(id: string, db?: DbClient) {
+    const client = getDbClient(db);
+
+    const slot = await client.slot.findUnique({
+        where: {
+            id,
+        },
+    });
+    return slot;
+}
+
+export async function markSlotBookedIfAvailable(id: string, db?: DbClient) {
+    const client = getDbClient(db);
+
+    const bookedSlot = await client.slot.updateMany({
+        where: {
+            id,
+            status: "AVAILABLE",
+        },
+        data: {
+            status: "BOOKED",
+        },
+    });
+    return bookedSlot;
+}
+
+export async function lockSlotForUpdate(id: string, db?: DbClient) {
+    const client = getDbClient(db);
+
+    const lockedSlot = client.$queryRaw<{ id: string }[]>`
+        SELECT id
+        FROM slots
+        WHERE id = ${id}
+        FOR UPDATE
+    `;
+    return lockedSlot;
+}
+
+export async function markSlotBooked(id: string, db?: DbClient) {
+    const client = getDbClient(db);
+
+    const bookedSlot = await client.slot.update({
+        where: {
+            id,
+        },
+        data: {
+            status: "BOOKED",
+        },
+    });
+    return bookedSlot;
 }
