@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const dateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+
 export const createBookingSchema = z.object({
     slotId: z.string(),
     inviteeEmail: z.string().email("Invalid email address"),
@@ -10,4 +12,18 @@ export const createBookingSchema = z.object({
     inviteeNotes: z.string().optional(),
 });
 
+export const listHostBookingsQuerySchema = z.object({
+    status: z.enum(["CONFIRMED", "PENDING", "CANCELLED"]).optional(),
+    from: z
+        .string()
+        .regex(dateRegex, "Date must be in YYYY-MM-DD format")
+        .optional(),
+    to: z
+        .string()
+        .regex(dateRegex, "Date must be in YYYY-MM-DD format")
+        .optional(),
+});
+
 export type CreateBookingDto = z.infer<typeof createBookingSchema>;
+
+export type ListHostBookingsQuery = z.infer<typeof listHostBookingsQuerySchema>;
