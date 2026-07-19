@@ -1,5 +1,8 @@
 import { prisma } from "../config/database.js";
-import { CreateBookingDto } from "../dtos/booking.dto.js";
+import {
+    CreateBookingDto,
+    ListHostBookingsQuery,
+} from "../dtos/booking.dto.js";
 import { badRequest, notFound } from "../utils/api-error.js";
 import type { Slot } from "../../generated/prisma/client.js";
 import {
@@ -8,8 +11,12 @@ import {
     markSlotBookedIfAvailable,
     markSlotBooked,
 } from "../repositories/slot.repository.js";
-import { createBooking } from "../repositories/booking.repository.js";
+import {
+    createBooking,
+    findHostBookings,
+} from "../repositories/booking.repository.js";
 import { startRegenerateHostSlotsWorkflow } from "../temporal/client.js";
+import { DateTime } from "luxon";
 
 async function triggerSlotRegen(hostId: number, slotStartAt: Date) {
     const date = slotStartAt.toISOString().split("T")[0];
@@ -117,4 +124,49 @@ export async function createBookingPessimistically(
     await triggerSlotRegen(userId, booking.slot.startAt);
 
     return formatBookingResponse(booking);
+}
+
+function formatBookingListItem(booking: {
+    id: number;
+    status: string;
+    inviteeEmail: string;
+    inviteeName: string;
+    inviteeNotes: string | null;
+    slot: { startAt: Date; endAt: Date };
+    eventType: { id: number; title: string; slug: string };
+}) {
+    return {
+        id: booking.id,
+        status: booking.status,
+        inviteeEmail: booking.inviteeEmail,
+        inviteeName: booking.inviteeName,
+        inviteeNotes: booking.inviteeNotes,
+        startAt: booking.slot.startAt.toISOString(),
+        endAt: booking.slot.endAt.toISOString(),
+        eventType: booking.eventType,
+    };
+}
+
+export async function listHostBookings(
+    hostId: number,
+    query: ListHostBookingsQuery,
+) {
+    const from = query.from
+        ? DateTime.fromISO(query.from, { zone: "utc" })
+              .startOf("day")
+              .toJSDate()
+        : undefined;
+
+    const to = query.to
+        ? DateTime.fromISO(query.to, { zone: "utc" }).endOf("day").toJSDate()
+        : undefined;
+
+    const bookings = await findHostBookings(hostId, {
+        status: query.status,
+        from,
+        to,
+    });
+    return {
+        bookings: bookings.map(formatBookingListItem),
+    };
 }
