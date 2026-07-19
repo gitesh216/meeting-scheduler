@@ -15,3 +15,17 @@ export const validate =
 
         next();
     };
+
+export const validateQuery =
+    (schema: ZodSchema) =>
+    (req: Request, _res: Response, next: NextFunction) => {
+        const result = schema.safeParse(req.query);
+
+        if (!result.success) {
+            throw badRequest("Invalid request query", result.error.issues);
+        }
+
+        req.query = result.data as Request["query"];
+
+        next();
+    };
