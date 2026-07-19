@@ -71,3 +71,17 @@ export async function findHostBookings(
     });
     return bookings;
 }
+
+export async function findBookingById(id: number) {
+    const booking = await prisma.booking.findUnique({
+        where: {
+            id,
+        },
+        include: {
+            slot: true,
+            eventType: true,
+            host: true,
+        },
+    });
+    return booking;
+}
