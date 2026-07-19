@@ -9,6 +9,19 @@ import {
     markSlotBooked,
 } from "../repositories/slot.repository.js";
 import { createBooking } from "../repositories/booking.repository.js";
+import { startRegenerateHostSlotsWorkflow } from "../temporal/client.js";
+
+async function triggerSlotRegen(hostId: number, slotStartAt: Date) {
+    const date = slotStartAt.toISOString().split("T")[0];
+    await startRegenerateHostSlotsWorkflow({
+        hostId,
+        from: date,
+        to: date,
+    });
+    console.log(
+        `[booking] Triggering slot regeneration for host ${hostId} on ${date}`,
+    );
+}
 
 function validateSlotForBooking(slot: Slot | null): Slot {
     if (!slot) {
@@ -67,6 +80,7 @@ export async function createBookingOptimistically(
             tx,
         );
     });
+    await triggerSlotRegen(userId, booking.slot.startAt);
 
     return formatBookingResponse(booking);
 }
@@ -100,6 +114,7 @@ export async function createBookingPessimistically(
             tx,
         );
     });
+    await triggerSlotRegen(userId, booking.slot.startAt);
 
     return formatBookingResponse(booking);
 }
