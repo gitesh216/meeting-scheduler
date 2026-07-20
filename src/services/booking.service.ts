@@ -15,7 +15,10 @@ import {
     createBooking,
     findHostBookings,
 } from "../repositories/booking.repository.js";
-import { startRegenerateHostSlotsWorkflow } from "../temporal/client.js";
+import {
+    startRegenerateHostSlotsWorkflow,
+    startSendBookingConfirmationWorkflow,
+} from "../temporal/client.js";
 import { DateTime } from "luxon";
 
 async function triggerSlotRegen(hostId: number, slotStartAt: Date) {
@@ -60,6 +63,20 @@ function formatBookingResponse(booking: {
     };
 }
 
+async function postBookingActions(
+    hostId: number,
+    booking: {
+        id: number;
+        status: string;
+        slot: { startAt: Date; endAt: Date };
+    },
+) {
+    await triggerSlotRegen(hostId, booking.slot.startAt);
+    await startSendBookingConfirmationWorkflow(booking.id);
+
+    return formatBookingResponse(booking);
+}
+
 export async function createBookingOptimistically(
     userId: number,
     bookingDto: CreateBookingDto,
@@ -87,9 +104,7 @@ export async function createBookingOptimistically(
             tx,
         );
     });
-    await triggerSlotRegen(userId, booking.slot.startAt);
-
-    return formatBookingResponse(booking);
+    return postBookingActions(userId, booking);
 }
 
 export async function createBookingPessimistically(
@@ -121,9 +136,7 @@ export async function createBookingPessimistically(
             tx,
         );
     });
-    await triggerSlotRegen(userId, booking.slot.startAt);
-
-    return formatBookingResponse(booking);
+    return postBookingActions(userId, booking);
 }
 
 function formatBookingListItem(booking: {

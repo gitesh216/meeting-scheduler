@@ -52,3 +52,11 @@ export async function startRegenerateHostSlotsWorkflow(
         [input],
     );
 }
+
+export async function startSendBookingConfirmationWorkflow(bookingId: number) {
+    return startWorkflow(
+        "sendBookingConfirmationWorkflow",
+        `send-booking-confirmation-${bookingId}-${Date.now()}`,
+        [bookingId],
+    );
+}
