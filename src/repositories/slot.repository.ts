@@ -128,3 +128,17 @@ export async function markSlotBooked(id: string, db?: DbClient) {
     });
     return bookedSlot;
 }
+
+export async function markSlotAvailable(id: string, db?: DbClient) {
+    const client = getDbClient(db);
+
+    const availableSlot = await client.slot.update({
+        where: {
+            id,
+        },
+        data: {
+            status: "AVAILABLE",
+        },
+    });
+    return availableSlot;
+}

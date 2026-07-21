@@ -85,3 +85,48 @@ export async function findBookingById(id: number) {
     });
     return booking;
 }
+
+export async function findBookingByIdForHost(
+    bookingId: number,
+    hostId: number,
+    db?: DbClient,
+) {
+    const client = getDbClient(db);
+    return client.booking.findFirst({
+        where: { id: bookingId, hostId },
+        include: { slot: true, eventType: true, host: true },
+    });
+}
+
+export async function cancelBookingById(
+    bookingId: number,
+    hostId: number,
+    db?: DbClient,
+) {
+    const client = getDbClient(db);
+    const booking = await findBookingById(bookingId);
+
+    if (!booking || booking.hostId !== hostId) {
+        return;
+    }
+
+    const delBooking = await client.booking.update({
+        where: {
+            id: bookingId,
+            status: {
+                in: ["CONFIRMED", "PENDING"],
+            },
+        },
+        data: {
+            status: "CANCELLED",
+            cancelledAt: new Date(),
+        },
+        include: {
+            slot: true,
+            eventType: true,
+            host: true,
+        },
+    });
+
+    return delBooking;
+}

@@ -10,10 +10,13 @@ import {
     lockSlotForUpdate,
     markSlotBookedIfAvailable,
     markSlotBooked,
+    markSlotAvailable,
 } from "../repositories/slot.repository.js";
 import {
     createBooking,
     findHostBookings,
+    cancelBookingById,
+    findBookingByIdForHost,
 } from "../repositories/booking.repository.js";
 import {
     startRegenerateHostSlotsWorkflow,
@@ -182,4 +185,33 @@ export async function listHostBookings(
     return {
         bookings: bookings.map(formatBookingListItem),
     };
+}
+
+
+export async function cancelBooking(hostId: number, bookingId: number) {
+    const canBooking = prisma.$transaction(async (tx) => {
+        const booking = await findBookingByIdForHost(bookingId, hostId, tx);
+
+        if (!booking) {
+            throw notFound("Booking not found");
+        }
+
+        if (booking.status === "CANCELLED") {
+            throw badRequest("Booking is already cancelled");
+        }
+
+        if (booking.slot.startAt <= new Date()) {
+            throw badRequest("Slot has already started");
+        }
+
+        const cancelled = await cancelBookingById(bookingId, hostId, tx);
+
+        if (!cancelled) {
+            throw notFound("Booking not found");
+        }
+
+        await markSlotAvailable(booking.slotId, tx);
+        return cancelled;
+    });
+    return canBooking;
 }
