@@ -21,6 +21,7 @@ import {
 import {
     startRegenerateHostSlotsWorkflow,
     startSendBookingConfirmationWorkflow,
+    startSendBookingCancelledWorkflow,
 } from "../temporal/client.js";
 import { DateTime } from "luxon";
 
@@ -213,5 +214,6 @@ export async function cancelBooking(hostId: number, bookingId: number) {
         await markSlotAvailable(booking.slotId, tx);
         return cancelled;
     });
+    await startSendBookingCancelledWorkflow(bookingId);
     return canBooking;
 }
