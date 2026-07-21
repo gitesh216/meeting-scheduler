@@ -13,3 +13,4 @@ bookingRouter.use(requireUserId);
 
 bookingRouter.get("/", validateQuery(listHostBookingsQuerySchema), list);
 bookingRouter.post("/", validate(createBookingSchema), create);
+bookingRouter.delete("/:bookingId", create);
