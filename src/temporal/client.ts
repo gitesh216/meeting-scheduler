@@ -60,3 +60,11 @@ export async function startSendBookingConfirmationWorkflow(bookingId: number) {
         [bookingId],
     );
 }
+
+export async function startSendBookingCancelledWorkflow(bookingId: number) {
+    return startWorkflow(
+        "sendBookingCancelledWorkflow",
+        `send-booking-cancelled-${bookingId}-${Date.now()}`,
+        [bookingId],
+    );
+}

@@ -1,4 +1,7 @@
-import { sendBookingConfirmationEmail } from "../../mailer/booking.mailer.js";
+import {
+    sendBookingConfirmationEmail,
+    sendBookingCancelledEmail,
+} from "../../mailer/booking.mailer.js";
 import {
     RegenerateHostSlotsInput,
     generateHostSlots as runSlotGeneration,
@@ -12,4 +15,8 @@ export async function regenerateHostSlotsActivity(
 
 export async function sendBookingConfirmationEmailAcitivity(bookingId: number) {
     await sendBookingConfirmationEmail(bookingId);
+}
+
+export async function sendBookingCancelledEmailActivity(bookingId: number) {
+    await sendBookingCancelledEmail(bookingId);
 }
