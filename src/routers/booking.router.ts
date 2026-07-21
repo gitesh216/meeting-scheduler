@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { create, list } from "../controllers/booking.controller.js";
+import { create, list, remove } from "../controllers/booking.controller.js";
 import {
     createBookingSchema,
     listHostBookingsQuerySchema,
@@ -13,4 +13,4 @@ bookingRouter.use(requireUserId);
 
 bookingRouter.get("/", validateQuery(listHostBookingsQuerySchema), list);
 bookingRouter.post("/", validate(createBookingSchema), create);
-bookingRouter.delete("/:bookingId", create);
+bookingRouter.delete("/:bookingId", remove);

@@ -20,7 +20,7 @@ export async function list(req: Request, res: Response) {
 
 
 export async function remove(req: Request, res: Response) {
-    const { id } = req.params;
+    const { bookingId: id } = req.params;
     await removeBookingService(req.userId, Number(id));
     sendSuccess(res, null, 200, "Booking deleted successfully");
 }
