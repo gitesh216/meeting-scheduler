@@ -72,8 +72,9 @@ export async function findHostBookings(
     return bookings;
 }
 
-export async function findBookingById(id: number) {
-    const booking = await prisma.booking.findUnique({
+export async function findBookingById(id: number, db?: DbClient) {
+    const client = getDbClient(db);
+    const booking = await client.booking.findUnique({
         where: {
             id,
         },
@@ -104,13 +105,14 @@ export async function cancelBookingById(
     db?: DbClient,
 ) {
     const client = getDbClient(db);
-    const booking = await findBookingById(bookingId);
+
+    const booking = await findBookingById(bookingId, client);
 
     if (!booking || booking.hostId !== hostId) {
-        return;
+        return undefined;
     }
 
-    const delBooking = await client.booking.update({
+    const result = await client.booking.updateMany({
         where: {
             id: bookingId,
             status: {
@@ -121,6 +123,14 @@ export async function cancelBookingById(
             status: "CANCELLED",
             cancelledAt: new Date(),
         },
+    });
+
+    if (result.count === 0) {
+        return undefined;
+    }
+
+    const delBooking = await client.booking.findUnique({
+        where: { id: bookingId },
         include: {
             slot: true,
             eventType: true,

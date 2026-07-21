@@ -190,7 +190,7 @@ export async function listHostBookings(
 
 
 export async function cancelBooking(hostId: number, bookingId: number) {
-    const canBooking = prisma.$transaction(async (tx) => {
+    const canBooking = await prisma.$transaction(async (tx) => {
         const booking = await findBookingByIdForHost(bookingId, hostId, tx);
 
         if (!booking) {

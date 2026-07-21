@@ -132,13 +132,20 @@ export async function markSlotBooked(id: string, db?: DbClient) {
 export async function markSlotAvailable(id: string, db?: DbClient) {
     const client = getDbClient(db);
 
-    const availableSlot = await client.slot.update({
+    const result = await client.slot.updateMany({
         where: {
             id,
+            status: "BOOKED",
         },
         data: {
             status: "AVAILABLE",
         },
     });
+
+    if (result.count === 0) {
+        return undefined;
+    }
+
+    const availableSlot = await client.slot.findUnique({ where: { id } });
     return availableSlot;
 }
