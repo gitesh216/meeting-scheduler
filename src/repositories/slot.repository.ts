@@ -149,3 +149,32 @@ export async function markSlotAvailable(id: string, db?: DbClient) {
     const availableSlot = await client.slot.findUnique({ where: { id } });
     return availableSlot;
 }
+
+export async function bulkCreateAvailableSlots(
+    hostId: number,
+    eventTypeId: number,
+    slots: { startAt: Date; endAt: Date }[],
+) {
+    return prisma.slot.createMany({
+        data: slots.map((s) => ({
+            hostId,
+            eventTypeId,
+            startAt: s.startAt,
+            endAt: s.endAt,
+            status: "AVAILABLE",
+        })),
+        skipDuplicates: true,
+    });
+}
+
+export async function bulkUpdateSlotStatuses(
+    slotIds: string[],
+    status: string,
+) {
+    return prisma.slot.updateMany({
+        where: {
+            id: { in: slotIds },
+        },
+        data: { status },
+    });
+}
