@@ -7,8 +7,8 @@ import {
 import { findActiveEventTypesByHost } from "../repositories/event-type.repository.js";
 import {
     findBookedSlotsByHostInRange,
-    upsertAvailableSlot,
-    blockSlot,
+    bulkCreateAvailableSlots,
+    bulkUpdateSlotStatuses,
     findFutureSlotsByEventTypeInRange,
 } from "../repositories/slot.repository.js";
 import {
@@ -64,6 +64,7 @@ export async function generateHostSlots(input: RegenerateHostSlotsInput) {
 
     for (const eventType of eventTypes) {
         const generatedValidSlotsKeys = new Set<string>();
+        const pendingSlots: { startAt: Date; endAt: Date }[] = [];
 
         for (
             let cursor = from;
@@ -130,26 +131,64 @@ export async function generateHostSlots(input: RegenerateHostSlotsInput) {
 
                 generatedValidSlotsKeys.add(key);
 
-                await upsertAvailableSlot(
-                    input.hostId,
-                    eventType.id,
-                    startAt,
-                    endAt,
-                );
+                pendingSlots.push({ startAt, endAt });
             }
         }
 
-        const futureSlots = await findFutureSlotsByEventTypeInRange(
+        const existingSlots = await findFutureSlotsByEventTypeInRange(
             eventType.id,
             from.toJSDate(),
             to.toJSDate(),
         );
 
-        for (const slot of futureSlots) {
+        const existingKeys = new Set(
+            existingSlots.map(
+                (s) =>
+                    `${eventType.id}|${s.startAt.toISOString()}|${s.endAt.toISOString()}`,
+            ),
+        );
+
+        // Filter for brand-new slots that need to be created
+        const slotsToCreate = pendingSlots.filter((s) => {
+            return !existingKeys.has(
+                `${eventType.id}|${s.startAt.toISOString()}|${s.endAt.toISOString()}`,
+            );
+        });
+
+        const idsToReactivate = [];
+        const idsToBlock = [];
+
+        for (const slot of existingSlots) {
             const key = `${eventType.id}|${slot.startAt.toISOString()}|${slot.endAt.toISOString()}`;
-            if (!generatedValidSlotsKeys.has(key)) {
-                await blockSlot(slot.id);
+
+            // If wegenerated it, but it's not currently AVAILABLE, reactivate it
+            if (
+                generatedValidSlotsKeys.has(key) &&
+                slot.status !== "AVAILABLE"
+            ) {
+                idsToReactivate.push(slot.id);
             }
+            // If we didn't generate it, but it's currently AVAILABLE, block it
+            else if (
+                !generatedValidSlotsKeys.has(key) &&
+                slot.status === "AVAILABLE"
+            ) {
+                idsToBlock.push(slot.id);
+            }
+        }
+
+        if (slotsToCreate.length > 0) {
+            await bulkCreateAvailableSlots(
+                input.hostId,
+                eventType.id,
+                slotsToCreate,
+            );
+        }
+        if (idsToReactivate.length > 0) {
+            await bulkUpdateSlotStatuses(idsToReactivate, "AVAILABLE");
+        }
+        if (idsToBlock.length > 0) {
+            await bulkUpdateSlotStatuses(idsToBlock, "BLOCKED");
         }
     }
 }
