@@ -113,3 +113,16 @@ export async function findActiveEventTypesByHost(hostId: number) {
 
     return eventTypes;
 }
+
+export async function findEventTypesByHost(hostId: number) {
+    const eventTypes = await prisma.eventType.findMany({
+        where: {
+            hostId,
+        },
+        orderBy: {
+            createdAt: "desc",
+        },
+    });
+
+    return eventTypes;
+}
