@@ -1,14 +1,20 @@
 import { Request, Response } from "express";
 import { ListHostBookingsQuery } from "../dtos/booking.dto.js";
 import {
+    createBookingOptimistically,
     createBookingPessimistically,
     listHostBookings as listHostBookingsService,
     cancelBooking as removeBookingService
 } from "../services/booking.service.js";
 import { sendSuccess } from "../utils/api-response.js";
 
-export async function create(req: Request, res: Response) {
+export async function create1(req: Request, res: Response) {
     const result = await createBookingPessimistically(req.userId, req.body);
+    sendSuccess(res, result, 201, "Booking created successfully");
+}
+
+export async function create2(req: Request, res: Response) {
+    const result = await createBookingOptimistically(req.userId, req.body);
     sendSuccess(res, result, 201, "Booking created successfully");
 }
 

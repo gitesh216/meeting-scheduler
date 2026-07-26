@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { create, list, remove } from "../controllers/booking.controller.js";
+import { create1, create2, list, remove } from "../controllers/booking.controller.js";
 import {
     createBookingSchema,
     listHostBookingsQuerySchema,
@@ -12,5 +12,6 @@ export const bookingRouter: Router = Router();
 bookingRouter.use(requireUserId);
 
 bookingRouter.get("/", validateQuery(listHostBookingsQuerySchema), list);
-bookingRouter.post("/", validate(createBookingSchema), create);
+bookingRouter.post("/pessimistic", validate(createBookingSchema), create1);
+bookingRouter.post("/optimistic", validate(createBookingSchema), create2);
 bookingRouter.delete("/:bookingId", remove);
