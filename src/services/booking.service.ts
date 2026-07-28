@@ -22,6 +22,7 @@ import {
     startRegenerateHostSlotsWorkflow,
     startSendBookingConfirmationWorkflow,
     startSendBookingCancelledWorkflow,
+    startCreateGoogleCalendarEventWorkflow,
 } from "../temporal/client.js";
 import { DateTime } from "luxon";
 
@@ -77,6 +78,7 @@ async function postBookingActions(
 ) {
     await triggerSlotRegen(hostId, booking.slot.startAt);
     await startSendBookingConfirmationWorkflow(booking.id);
+    await startCreateGoogleCalendarEventWorkflow(booking.id);
 
     return formatBookingResponse(booking);
 }
@@ -187,7 +189,6 @@ export async function listHostBookings(
         bookings: bookings.map(formatBookingListItem),
     };
 }
-
 
 export async function cancelBooking(hostId: number, bookingId: number) {
     const canBooking = await prisma.$transaction(async (tx) => {

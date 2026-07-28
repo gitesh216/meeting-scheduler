@@ -2,6 +2,11 @@ import {
     sendBookingConfirmationEmail,
     sendBookingCancelledEmail,
 } from "../../mailer/booking.mailer.js";
+import { updateBookingCalendarDetails } from "../../repositories/booking.repository.js";
+import {
+    createGoogleCalendarEvent,
+    isProjectCalendarConfigured,
+} from "../../services/google-calendar.service.js";
 import {
     RegenerateHostSlotsInput,
     generateHostSlots as runSlotGeneration,
@@ -19,4 +24,19 @@ export async function sendBookingConfirmationEmailAcitivity(bookingId: number) {
 
 export async function sendBookingCancelledEmailActivity(bookingId: number) {
     await sendBookingCancelledEmail(bookingId);
+}
+
+export async function createGoogleCalendarEventActivity(bookingId: number) {
+    if (!isProjectCalendarConfigured()) {
+        console.warn(
+            "[temporal] Google Calendar is not configured, skipping event creation",
+        );
+        return;
+    }
+    const result = await createGoogleCalendarEvent(bookingId);
+
+    await updateBookingCalendarDetails(bookingId, {
+        meetLink: result.meetLink,
+        calendarEventId: result.calendarEventId,
+    });
 }

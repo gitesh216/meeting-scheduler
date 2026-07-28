@@ -68,3 +68,13 @@ export async function startSendBookingCancelledWorkflow(bookingId: number) {
         [bookingId],
     );
 }
+
+export async function startCreateGoogleCalendarEventWorkflow(
+    bookingId: number,
+) {
+    return startWorkflow(
+        "createGoogleCalendarEventWorkflow",
+        `create-google-calendar-event-${bookingId}-${Date.now()}`,
+        [bookingId],
+    );
+}
