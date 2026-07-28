@@ -4,6 +4,7 @@ import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, GOOGLE_SEN
 const SCOPES = [
     'https://www.googleapis.com/auth/calendar',
     'https://www.googleapis.com/auth/calendar.events',
+    'https://www.googleapis.com/auth/userinfo.email',
 ]
 
 export function isProjectCalendarConfigured() : boolean {
@@ -42,7 +43,7 @@ export async function exchangeSetupCode(code: string) {
         auth: client,
     });
     const { data } = await oauth2.userinfo.get();
-
+    
     return {
         refreshToken: tokens.refresh_token,
         email: data.email ?? GOOGLE_SENDER_EMAIL,
