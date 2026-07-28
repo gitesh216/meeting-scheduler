@@ -1,31 +1,47 @@
 import { google } from "googleapis";
-import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, GOOGLE_SENDER_EMAIL } from "../config/env.js";
+import {
+    GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET,
+    GOOGLE_REDIRECT_URI,
+    GOOGLE_REFRESH_TOKEN,
+    GOOGLE_CALENDAR_ID,
+} from "../config/env.js";
+import { findBookingById } from "../repositories/booking.repository.js";
+import { notFound } from "../utils/api-error.js";
 
 const SCOPES = [
-    'https://www.googleapis.com/auth/calendar',
-    'https://www.googleapis.com/auth/calendar.events',
-    'https://www.googleapis.com/auth/userinfo.email',
-]
+    "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/calendar.events",
+    "https://www.googleapis.com/auth/userinfo.email",
+];
 
-export function isProjectCalendarConfigured() : boolean {
-    return Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REDIRECT_URI);
+export function isProjectCalendarConfigured(): boolean {
+    return Boolean(
+        GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REDIRECT_URI,
+    );
 }
 
-export function getGoogleOauthClient(): InstanceType<typeof google.auth.OAuth2> {
-    if(!isProjectCalendarConfigured()) {
+export function getGoogleOauthClient(): InstanceType<
+    typeof google.auth.OAuth2
+> {
+    if (!isProjectCalendarConfigured()) {
         throw new Error("Google project calendar is not configured");
     }
 
-    return new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI);
+    return new google.auth.OAuth2(
+        GOOGLE_CLIENT_ID,
+        GOOGLE_CLIENT_SECRET,
+        GOOGLE_REDIRECT_URI,
+    );
 }
 
 export function getSetupAuthUrl() {
     const client = getGoogleOauthClient();
     return client.generateAuthUrl({
-        access_type: 'offline',
-        prompt: 'consent',
+        access_type: "offline",
+        prompt: "consent",
         scope: SCOPES,
-        state: 'setup',
+        state: "setup",
     });
 }
 
@@ -33,7 +49,7 @@ export async function exchangeSetupCode(code: string) {
     const client = getGoogleOauthClient();
 
     const { tokens } = await client.getToken(code);
-    if(!tokens) {
+    if (!tokens) {
         throw new Error("Now refresh token found");
     }
     client.setCredentials(tokens);
@@ -43,9 +59,94 @@ export async function exchangeSetupCode(code: string) {
         auth: client,
     });
     const { data } = await oauth2.userinfo.get();
-    
+    if (!data.email) {
+        throw new Error("Unable to retrieve user's email from Google.");
+    }
     return {
         refreshToken: tokens.refresh_token,
-        email: data.email ?? GOOGLE_SENDER_EMAIL,
+        email: data.email,
+    };
+}
+
+export function getGoogleCalendarClient(): InstanceType<
+    typeof google.auth.OAuth2
+> {
+    if (!isProjectCalendarConfigured()) {
+        throw new Error("Google project calendar is not configured");
     }
+
+    const client = getGoogleOauthClient();
+
+    client.setCredentials({
+        refresh_token: GOOGLE_REFRESH_TOKEN, // TODO: Bring from Redis
+    });
+    return client;
+}
+
+export async function createGoogleCalendarEvent(bookingId: number) {
+    const booking = await findBookingById(bookingId);
+
+    if (!booking || booking.status !== "CONFIRMED") {
+        throw notFound("Confirmed booking not found");
+    }
+
+    const client = getGoogleCalendarClient();
+
+    const calendar = await google.calendar({
+        version: "v3",
+        auth: client,
+    });
+
+    const event = await calendar.events.insert({
+        calendarId: GOOGLE_CALENDAR_ID,
+        conferenceDataVersion: 1,
+        sendUpdates: "all",
+        requestBody: {
+            summary: `${booking.eventType.title} with ${booking.inviteeName}`,
+            description: [
+                booking.eventType.description,
+                booking.inviteeNotes
+                    ? `Invitee note: ${booking.inviteeNotes}`
+                    : "",
+            ].join("\n\n"),
+            start: {
+                dateTime: booking.slot.startAt.toISOString(),
+                timeZone: booking.host.timezone,
+            },
+            end: {
+                dateTime: booking.slot.endAt.toISOString(),
+                timeZone: booking.host.timezone,
+            },
+            attendees: [
+                {
+                    email: booking.inviteeEmail,
+                    displayName: booking.inviteeName,
+                },
+            ],
+            conferenceData: {
+                createRequest: {
+                    requestId: bookingId.toString(),
+                    conferenceSolutionKey: {
+                        type: "hangoutsMeet",
+                    },
+                },
+            },
+        },
+    });
+
+    const meetLink =
+        event.data.conferenceData?.entryPoints?.find(
+            (entryPoint) => entryPoint.entryPointType === "video",
+        )?.uri ??
+        event.data.hangoutLink ??
+        null;
+
+    if (!event.data.id || !meetLink) {
+        throw new Error("Unable to create Google Calendar event");
+    }
+
+    return {
+        meetLink,
+        calendarEventId: event.data.id,
+    };
 }
