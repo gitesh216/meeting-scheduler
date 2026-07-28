@@ -8,7 +8,8 @@
     "dev:worker": "nodemon --watch src --ext ts --exec 'tsx src/temporal/worker.ts'",
     "prisma:format": "prisma format",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate",
+    "google:setup": "tsx src/utils/google-setup.ts"
   },
   "keywords": [],
   "author": "",
