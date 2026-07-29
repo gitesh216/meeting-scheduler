@@ -3,11 +3,31 @@ import {
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET,
     GOOGLE_REDIRECT_URI,
-    GOOGLE_REFRESH_TOKEN,
     GOOGLE_CALENDAR_ID,
 } from "../config/env.js";
 import { findBookingById } from "../repositories/booking.repository.js";
 import { notFound } from "../utils/api-error.js";
+
+import { getRedisClient } from "../config/redis-client.js";
+
+function googleRefreshTokenKey(userId: number): string {
+    return `google:calendar:refresh_token:${userId}`;
+}
+
+async function saveGoogleRefreshToken(
+    userId: number,
+    token: string,
+): Promise<void> {
+    const redis = getRedisClient();
+    await redis.set(googleRefreshTokenKey(userId), token);
+}
+
+async function getStoredGoogleRefreshToken(
+    userId: number,
+): Promise<string | null> {
+    const redis = getRedisClient();
+    return redis.get(googleRefreshTokenKey(userId));
+}
 
 const SCOPES = [
     "https://www.googleapis.com/auth/calendar",
@@ -45,7 +65,7 @@ export function getSetupAuthUrl() {
     });
 }
 
-export async function exchangeSetupCode(code: string) {
+export async function exchangeSetupCode(userId: number, code: string) {
     const client = getGoogleOauthClient();
 
     const { tokens } = await client.getToken(code);
@@ -62,24 +82,28 @@ export async function exchangeSetupCode(code: string) {
     if (!data.email) {
         throw new Error("Unable to retrieve user's email from Google.");
     }
+
+    await saveGoogleRefreshToken(userId, String(tokens.refresh_token));
     return {
         refreshToken: tokens.refresh_token,
         email: data.email,
     };
 }
 
-export function getGoogleCalendarClient(): InstanceType<
-    typeof google.auth.OAuth2
-> {
+export async function getGoogleCalendarClient(
+    userId: number,
+): Promise<InstanceType<typeof google.auth.OAuth2>> {
     if (!isProjectCalendarConfigured()) {
         throw new Error("Google project calendar is not configured");
     }
 
-    const client = getGoogleOauthClient();
+    const refreshToken = await getStoredGoogleRefreshToken(userId);
+    if (!refreshToken) {
+        throw new Error(`User ${userId} has not connected a Google Calendar`);
+    }
 
-    client.setCredentials({
-        refresh_token: GOOGLE_REFRESH_TOKEN, // TODO: Bring from Redis
-    });
+    const client = getGoogleOauthClient();
+    client.setCredentials({ refresh_token: refreshToken });
     return client;
 }
 
@@ -90,7 +114,7 @@ export async function createGoogleCalendarEvent(bookingId: number) {
         throw notFound("Confirmed booking not found");
     }
 
-    const client = getGoogleCalendarClient();
+    const client = await getGoogleCalendarClient(booking.hostId);
 
     const calendar = await google.calendar({
         version: "v3",
