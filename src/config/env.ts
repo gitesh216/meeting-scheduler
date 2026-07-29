@@ -26,3 +26,7 @@ export const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || "";
 export const GOOGLE_SENDER_EMAIL = process.env.GOOGLE_SENDER_EMAIL || "";
 export const GOOGLE_REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN || ""; // TODO: Add to redis
 export const GOOGLE_CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || "primary";
+
+export const REDIS_HOST = process.env.REDIS_HOST || "localhost";
+export const REDIS_PORT = Number(process.env.REDIS_PORT) || 6379;
+export const REDIS_PASSWORD = process.env.REDIS_PASSWORD || undefined;
