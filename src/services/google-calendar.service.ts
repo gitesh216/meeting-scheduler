@@ -6,9 +6,40 @@ import {
     GOOGLE_CALENDAR_ID,
 } from "../config/env.js";
 import { findBookingById } from "../repositories/booking.repository.js";
-import { notFound } from "../utils/api-error.js";
+import { notFound, badRequest } from "../utils/api-error.js";
 
 import { getRedisClient } from "../config/redis-client.js";
+import { randomUUID } from "crypto";
+
+const OAUTH_STATE_TTL_SECONDS = 600; // 10 minutes
+
+function oauthStateKey(nonce: string): string {
+    return `google:calendar:oauth_state:${nonce}`;
+}
+
+async function createOauthState(userId: number): Promise<string> {
+    const nonce = randomUUID();
+    const redis = getRedisClient();
+    await redis.set(
+        oauthStateKey(nonce),
+        String(userId),
+        "EX",
+        OAUTH_STATE_TTL_SECONDS,
+    );
+    return nonce;
+}
+
+async function consumeOauthState(nonce: string): Promise<number | null> {
+    const redis = getRedisClient();
+    const key = oauthStateKey(nonce);
+
+    const userId = await redis.get(key);
+    if (!userId) return null;
+
+    await redis.del(key); // one-time use
+
+    return Number(userId);
+}
 
 function googleRefreshTokenKey(userId: number): string {
     return `google:calendar:refresh_token:${userId}`;
@@ -55,22 +86,33 @@ export function getGoogleOauthClient(): InstanceType<
     );
 }
 
-export function getSetupAuthUrl() {
+export async function getSetupAuthUrl(userId: number): Promise<string> {
     const client = getGoogleOauthClient();
+    const state = await createOauthState(userId);
+
     return client.generateAuthUrl({
         access_type: "offline",
         prompt: "consent",
         scope: SCOPES,
-        state: "setup",
+        state,
     });
 }
 
-export async function exchangeSetupCode(userId: number, code: string) {
+export async function exchangeSetupCode(state: string, code: string) {
+    const userId = await consumeOauthState(state);
+    if (!userId) {
+        throw badRequest(
+            "Invalid or expired OAuth state — please restart the Google Calendar connection",
+        );
+    }
+
     const client = getGoogleOauthClient();
 
     const { tokens } = await client.getToken(code);
-    if (!tokens) {
-        throw new Error("Now refresh token found");
+    if (!tokens.refresh_token) {
+        throw badRequest(
+            "Google did not return a refresh token. Try disconnecting the app from your Google Account settings and reconnecting.",
+        );
     }
     client.setCredentials(tokens);
 
@@ -80,14 +122,12 @@ export async function exchangeSetupCode(userId: number, code: string) {
     });
     const { data } = await oauth2.userinfo.get();
     if (!data.email) {
-        throw new Error("Unable to retrieve user's email from Google.");
+        throw badRequest("Unable to retrieve user's email from Google.");
     }
 
-    await saveGoogleRefreshToken(userId, String(tokens.refresh_token));
-    return {
-        refreshToken: tokens.refresh_token,
-        email: data.email,
-    };
+    await saveGoogleRefreshToken(userId, tokens.refresh_token);
+
+    return { email: data.email };
 }
 
 export async function getGoogleCalendarClient(
