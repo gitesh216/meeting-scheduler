@@ -7,58 +7,14 @@ import {
 } from "../config/env.js";
 import { findBookingById } from "../repositories/booking.repository.js";
 import { notFound, badRequest } from "../utils/api-error.js";
-
-import { getRedisClient } from "../config/redis-client.js";
-import { randomUUID } from "crypto";
-
-const OAUTH_STATE_TTL_SECONDS = 600; // 10 minutes
-
-function oauthStateKey(nonce: string): string {
-    return `google:calendar:oauth_state:${nonce}`;
-}
-
-async function createOauthState(userId: number): Promise<string> {
-    const nonce = randomUUID();
-    const redis = getRedisClient();
-    await redis.set(
-        oauthStateKey(nonce),
-        String(userId),
-        "EX",
-        OAUTH_STATE_TTL_SECONDS,
-    );
-    return nonce;
-}
-
-async function consumeOauthState(nonce: string): Promise<number | null> {
-    const redis = getRedisClient();
-    const key = oauthStateKey(nonce);
-
-    const userId = await redis.get(key);
-    if (!userId) return null;
-
-    await redis.del(key); // one-time use
-
-    return Number(userId);
-}
-
-function googleRefreshTokenKey(userId: number): string {
-    return `google:calendar:refresh_token:${userId}`;
-}
-
-async function saveGoogleRefreshToken(
-    userId: number,
-    token: string,
-): Promise<void> {
-    const redis = getRedisClient();
-    await redis.set(googleRefreshTokenKey(userId), token);
-}
-
-async function getStoredGoogleRefreshToken(
-    userId: number,
-): Promise<string | null> {
-    const redis = getRedisClient();
-    return redis.get(googleRefreshTokenKey(userId));
-}
+import {
+    createOauthState,
+    consumeOauthState,
+} from "../repositories/google-oauth-state.repository.js";
+import {
+    saveGoogleRefreshToken,
+    getGoogleRefreshToken,
+} from "../repositories/google-token.repository.js";
 
 const SCOPES = [
     "https://www.googleapis.com/auth/calendar",
@@ -137,7 +93,7 @@ export async function getGoogleCalendarClient(
         throw new Error("Google project calendar is not configured");
     }
 
-    const refreshToken = await getStoredGoogleRefreshToken(userId);
+    const refreshToken = await getGoogleRefreshToken(userId);
     if (!refreshToken) {
         throw new Error(`User ${userId} has not connected a Google Calendar`);
     }
