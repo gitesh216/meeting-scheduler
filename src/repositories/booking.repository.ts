@@ -141,7 +141,6 @@ export async function cancelBookingById(
     return delBooking;
 }
 
-
 export async function updateBookingCalendarDetails(
     bookingId: number,
     data: {
@@ -157,6 +156,24 @@ export async function updateBookingCalendarDetails(
             id: bookingId,
         },
         data,
+    });
+    return updateBooking;
+}
+
+export async function clearBookingCalendarDetails(
+    bookingId: number,
+    db?: DbClient,
+) {
+    const client = getDbClient(db);
+
+    const updateBooking = client.booking.update({
+        where: {
+            id: bookingId,
+        },
+        data: {
+            meetLink: null,
+            calendarEventId: null,
+        },
     });
     return updateBooking;
 }

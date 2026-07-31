@@ -23,6 +23,7 @@ import {
     startSendBookingConfirmationWorkflow,
     startSendBookingCancelledWorkflow,
     startCreateGoogleCalendarEventWorkflow,
+    startDeleteGoogleCalendarEventWorkflow,
 } from "../temporal/client.js";
 import { DateTime } from "luxon";
 
@@ -83,8 +84,23 @@ async function postBookingActions(
     return formatBookingResponse(booking);
 }
 
+async function postBookingCancelActions(
+    hostId: number,
+    booking: {
+        id: number;
+        status: string;
+        slot: { startAt: Date; endAt: Date };
+    },
+) {
+    await triggerSlotRegen(hostId, booking.slot.startAt);
+    await startSendBookingCancelledWorkflow(booking.id);
+    await startDeleteGoogleCalendarEventWorkflow(booking.id);
+
+    return formatBookingResponse(booking);
+}
+
 export async function createBookingOptimistically(
-    userId: number,
+    hostId: number,
     bookingDto: CreateBookingDto,
 ) {
     const booking = await prisma.$transaction(async (tx) => {
@@ -104,17 +120,17 @@ export async function createBookingOptimistically(
                 inviteeEmail: bookingDto.inviteeEmail,
                 inviteeName: bookingDto.inviteeName,
                 inviteeNotes: bookingDto.inviteeNotes,
-                hostId: userId,
+                hostId: hostId,
                 eventTypeId: slot.eventTypeId,
             },
             tx,
         );
     });
-    return postBookingActions(userId, booking);
+    return postBookingActions(hostId, booking);
 }
 
 export async function createBookingPessimistically(
-    userId: number,
+    hostId: number,
     bookingDto: CreateBookingDto,
 ) {
     const booking = await prisma.$transaction(async (tx) => {
@@ -136,13 +152,13 @@ export async function createBookingPessimistically(
                 inviteeEmail: bookingDto.inviteeEmail,
                 inviteeName: bookingDto.inviteeName,
                 inviteeNotes: bookingDto.inviteeNotes,
-                hostId: userId,
+                hostId: hostId,
                 eventTypeId: slot.eventTypeId,
             },
             tx,
         );
     });
-    return postBookingActions(userId, booking);
+    return postBookingActions(hostId, booking);
 }
 
 function formatBookingListItem(booking: {
@@ -191,7 +207,7 @@ export async function listHostBookings(
 }
 
 export async function cancelBooking(hostId: number, bookingId: number) {
-    const canBooking = await prisma.$transaction(async (tx) => {
+    const cancel_booking = await prisma.$transaction(async (tx) => {
         const booking = await findBookingByIdForHost(bookingId, hostId, tx);
 
         if (!booking) {
@@ -215,6 +231,6 @@ export async function cancelBooking(hostId: number, bookingId: number) {
         await markSlotAvailable(booking.slotId, tx);
         return cancelled;
     });
-    await startSendBookingCancelledWorkflow(bookingId);
-    return canBooking;
+    
+    return postBookingCancelActions(hostId, cancel_booking);
 }

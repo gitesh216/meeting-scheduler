@@ -78,3 +78,13 @@ export async function startCreateGoogleCalendarEventWorkflow(
         [bookingId],
     );
 }
+
+export async function startDeleteGoogleCalendarEventWorkflow(
+    bookingId: number,
+) {
+    return startWorkflow(
+        "deleteGoogleCalendarEventWorkflow",
+        `delete-google-calendar-event-${bookingId}-${Date.now()}`,
+        [bookingId],
+    );
+}

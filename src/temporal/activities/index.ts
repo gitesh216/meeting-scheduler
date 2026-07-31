@@ -2,10 +2,14 @@ import {
     sendBookingConfirmationEmail,
     sendBookingCancelledEmail,
 } from "../../mailer/booking.mailer.js";
-import { updateBookingCalendarDetails } from "../../repositories/booking.repository.js";
+import {
+    updateBookingCalendarDetails,
+    clearBookingCalendarDetails,
+} from "../../repositories/booking.repository.js";
 import {
     createGoogleCalendarEvent,
     isProjectCalendarConfigured,
+    deleteGoogleCalendarEvent,
 } from "../../services/google-calendar.service.js";
 import {
     RegenerateHostSlotsInput,
@@ -39,4 +43,15 @@ export async function createGoogleCalendarEventActivity(bookingId: number) {
         meetLink: result.meetLink,
         calendarEventId: result.calendarEventId,
     });
+}
+
+export async function deleteGoogleCalendarEventActivity(bookingId: number) {
+    if (!isProjectCalendarConfigured()) {
+        console.warn(
+            "[temporal] Google Calendar is not configured, skipping event deletion",
+        );
+        return;
+    }
+    await deleteGoogleCalendarEvent(bookingId);
+    await clearBookingCalendarDetails(bookingId);
 }

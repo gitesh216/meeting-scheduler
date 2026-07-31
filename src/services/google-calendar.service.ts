@@ -208,3 +208,35 @@ export async function createGoogleCalendarEvent(bookingId: number) {
         calendarEventId: event.data.id,
     };
 }
+
+export async function deleteGoogleCalendarEvent(
+    bookingId: number,
+): Promise<void> {
+    const booking = await findBookingById(bookingId);
+    if (!booking) {
+        throw notFound("Booking not found");
+    }
+    if (!booking.calendarEventId) {
+        return; // nothing to delete — already detached
+    }
+
+    const client = await getGoogleCalendarClient(booking.host.id);
+    const calendar = google.calendar({ 
+        version: "v3", 
+        auth: client 
+    });
+
+    try {
+        await calendar.events.delete({
+            calendarId: GOOGLE_CALENDAR_ID,
+            eventId: booking.calendarEventId,
+            sendUpdates: "all",
+        });
+    } 
+    catch (err: any) {
+        if (err?.code === 410 || err?.code === 404) {
+            return; // already gone on Google's side
+        }
+        throw err;
+    }
+}
