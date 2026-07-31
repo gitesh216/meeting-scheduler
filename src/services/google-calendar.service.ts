@@ -14,6 +14,7 @@ import {
 import {
     saveGoogleRefreshToken,
     getGoogleRefreshToken,
+    getGoogleTokenRecord,
 } from "../repositories/google-token.repository.js";
 
 const SCOPES = [
@@ -21,6 +22,11 @@ const SCOPES = [
     "https://www.googleapis.com/auth/calendar.events",
     "https://www.googleapis.com/auth/userinfo.email",
 ];
+
+export interface GoogleCalendarStatus {
+    connected: boolean;
+    email?: string;
+}
 
 export function isProjectCalendarConfigured(): boolean {
     return Boolean(
@@ -81,7 +87,7 @@ export async function exchangeSetupCode(state: string, code: string) {
         throw badRequest("Unable to retrieve user's email from Google.");
     }
 
-    await saveGoogleRefreshToken(userId, tokens.refresh_token);
+    await saveGoogleRefreshToken(userId, tokens.refresh_token, data.email);
 
     return { email: data.email };
 }
@@ -101,6 +107,16 @@ export async function getGoogleCalendarClient(
     const client = getGoogleOauthClient();
     client.setCredentials({ refresh_token: refreshToken });
     return client;
+}
+
+export async function getGoogleCalendarStatus(
+    userId: number,
+): Promise<GoogleCalendarStatus> {
+    const record = await getGoogleTokenRecord(userId);
+    if (!record) {
+        return { connected: false };
+    }
+    return { connected: true, email: record.email };
 }
 
 export async function createGoogleCalendarEvent(bookingId: number) {

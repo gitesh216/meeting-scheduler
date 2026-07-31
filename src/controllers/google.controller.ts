@@ -3,6 +3,7 @@ import { badRequest } from "../utils/api-error.js";
 import {
     exchangeSetupCode,
     getSetupAuthUrl,
+    getGoogleCalendarStatus,
 } from "../services/google-calendar.service.js";
 import { sendSuccess } from "../utils/api-response.js";
 
@@ -31,4 +32,17 @@ export const setupGoogleCallback = async (req: Request, res: Response) => {
     const { email } = await exchangeSetupCode(state, code);
 
     sendSuccess(res, { email }, 200, "Google calendar connected successfully");
+};
+
+export const getGoogleCalendarStatusHandler = async (
+    req: Request,
+    res: Response,
+) => {
+    const userId = Number(req.headers["x-user-id"]);
+    if (!userId) {
+        throw badRequest("User id is required");
+    }
+
+    const status = await getGoogleCalendarStatus(userId);
+    sendSuccess(res, status, 200, "Google calendar status retrieved");
 };
