@@ -4,10 +4,11 @@ import {
     exchangeSetupCode,
     getSetupAuthUrl,
     getGoogleCalendarStatus,
+    disconnectGoogleCalendar,
 } from "../services/google-calendar.service.js";
 import { sendSuccess } from "../utils/api-response.js";
 
-export const setupGoogleAuthUrl = async (req: Request, res: Response) => {
+export async function setupGoogleAuthUrl(req: Request, res: Response) {
     const userId = Number(req.headers["x-user-id"]);
     if (!userId) {
         throw badRequest("Missing x-user-id header");
@@ -16,9 +17,9 @@ export const setupGoogleAuthUrl = async (req: Request, res: Response) => {
     const url = await getSetupAuthUrl(userId); // now async
 
     sendSuccess(res, { url }, 200, "Google auth URL generated");
-};
+}
 
-export const setupGoogleCallback = async (req: Request, res: Response) => {
+export async function setupGoogleCallback(req: Request, res: Response) {
     const code = req.query.code as string | undefined;
     const state = req.query.state as string | undefined;
 
@@ -32,12 +33,12 @@ export const setupGoogleCallback = async (req: Request, res: Response) => {
     const { email } = await exchangeSetupCode(state, code);
 
     sendSuccess(res, { email }, 200, "Google calendar connected successfully");
-};
+}
 
-export const getGoogleCalendarStatusHandler = async (
+export async function getGoogleCalendarStatusHandler(
     req: Request,
     res: Response,
-) => {
+) {
     const userId = Number(req.headers["x-user-id"]);
     if (!userId) {
         throw badRequest("User id is required");
@@ -45,4 +46,15 @@ export const getGoogleCalendarStatusHandler = async (
 
     const status = await getGoogleCalendarStatus(userId);
     sendSuccess(res, status, 200, "Google calendar status retrieved");
-};
+}
+
+export async function disconnectGoogleCalendarHandler(
+    req: Request,
+    res: Response,
+) {
+    const userId = Number(req.headers["x-user-id"]);
+    if (!userId) throw badRequest("Missing x-user-id header");
+
+    await disconnectGoogleCalendar(userId);
+    sendSuccess(res, null, 200, "Google calendar disconnected successfully");
+}

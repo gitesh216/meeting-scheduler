@@ -3,6 +3,7 @@ import {
     setupGoogleCallback,
     setupGoogleAuthUrl,
     getGoogleCalendarStatusHandler,
+    disconnectGoogleCalendarHandler
 } from "../controllers/google.controller.js";
 
 export const googleIntegrationRouter: Router = Router();
@@ -13,3 +14,4 @@ googleIntegrationRouter.get(
     "/google-calendar/status",
     getGoogleCalendarStatusHandler,
 );
+googleIntegrationRouter.delete("/google-calendar/disconnect", disconnectGoogleCalendarHandler);

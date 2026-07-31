@@ -15,6 +15,7 @@ import {
     saveGoogleRefreshToken,
     getGoogleRefreshToken,
     getGoogleTokenRecord,
+    deleteGoogleRefreshToken,
 } from "../repositories/google-token.repository.js";
 
 const SCOPES = [
@@ -117,6 +118,27 @@ export async function getGoogleCalendarStatus(
         return { connected: false };
     }
     return { connected: true, email: record.email };
+}
+
+export async function disconnectGoogleCalendar(userId: number): Promise<void> {
+    const record = await getGoogleTokenRecord(userId);
+    if (!record) return; // already disconnected — idempotent
+
+    try {
+        const client = new google.auth.OAuth2(
+            GOOGLE_CLIENT_ID,
+            GOOGLE_CLIENT_SECRET,
+            GOOGLE_REDIRECT_URI,
+        );
+        await client.revokeToken(record.refreshToken);
+    } catch (err) {
+        console.warn(
+            `[google-calendar] Token revocation failed for user ${userId}, deleting local record anyway`,
+            err,
+        );
+    }
+
+    await deleteGoogleRefreshToken(userId);
 }
 
 export async function createGoogleCalendarEvent(bookingId: number) {

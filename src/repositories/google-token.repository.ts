@@ -36,3 +36,8 @@ export async function getGoogleTokenRecord(
     }
     return JSON.parse(raw) as GoogleTokenRecord;
 }
+
+export async function deleteGoogleRefreshToken(userId: number): Promise<void> {
+    const redis = getRedisClient();
+    await redis.del(key(userId));
+}
