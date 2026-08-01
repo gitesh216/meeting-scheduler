@@ -19,9 +19,9 @@ A modern, type-safe backend API for a Calendly-like meeting scheduling applicati
   - Booking confirmation emails
   - Booking cancellation notifications
   - Google Calendar event creation with Google Meet links
-- **Google Calendar Integration** - OAuth2 flow for calendar setup, automatic event creation with Google Meet links
+- **Google Calendar Integration** - OAuth2 flow for calendar setup with Redis-based state management, automatic event creation with Google Meet links
 - **Email Notifications** - Booking confirmations and cancellations via SMTP (Mailhog for development)
-- **Redis Integration** - Caching and session management (ready for production)
+- **Redis Integration** - Caching, session management, and OAuth token storage (ready for production)
 - **Optimistic & Pessimistic Locking** - Race-condition-safe slot booking
 - **Availability Exceptions** - One-off date overrides (blocked time or custom hours)
 - **Availability Rules** - Recurring weekly schedules with timezone support
@@ -32,17 +32,17 @@ A modern, type-safe backend API for a Calendly-like meeting scheduling applicati
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | **Node.js** | Latest LTS | Runtime |
-| **TypeScript** | ^5.x | Type safety |
+| **TypeScript** | ^6.x | Type safety |
 | **Express** | ^5.x | Web framework |
 | **Prisma ORM** | ^7.x | Database ORM |
 | **PostgreSQL** | 15+ | Primary database |
-| **Temporal.io** | ^1.11.x | Workflow orchestration |
-| **Google APIs** | ^144.x | Google Calendar & OAuth2 |
-| **Redis** | ^4.x | Caching & sessions |
-| **Nodemailer** | ^6.x | Email delivery |
-| **Zod** | ^3.x | Schema validation |
+| **Temporal.io** | ^1.20.x | Workflow orchestration |
+| **Google APIs** | ^173.x | Google Calendar & OAuth2 |
+| **Redis** | ^5.x (ioredis) | Caching, sessions & OAuth tokens |
+| **Nodemailer** | ^9.x | Email delivery |
+| **Zod** | ^4.x | Schema validation |
 | **Luxon** | ^3.x | Date/time handling |
-| **dotenv** | ^16.x | Environment config |
+| **dotenv** | ^17.x | Environment config |
 | **tsx** | ^4.x | TypeScript execution |
 | **nodemon** | ^3.x | Auto-reload in dev |
 
@@ -98,6 +98,8 @@ Calendly-clone/
 │   │   ├── availability.repository.ts
 │   │   ├── booking.repository.ts
 │   │   ├── event-type.repository.ts
+│   │   ├── google-oauth-state.repository.ts  # Redis OAuth state management
+│   │   ├── google-token.repository.ts        # Redis token storage
 │   │   ├── slot.repository.ts
 │   │   └── user.repository.ts
 │   │
@@ -134,7 +136,7 @@ Calendly-clone/
 │   └── utils/
 │       ├── api-error.ts
 │       ├── api-response.ts
-│       ├── google-setup.ts
+│       ├── google-setup.ts        # Google OAuth CLI setup tool
 │       ├── id-generator.ts
 │       ├── ids.ts
 │       └── slots/
@@ -144,7 +146,7 @@ Calendly-clone/
 │   ├── integration/
 │   └── unit/
 │
-├── docker-compose.yml             # Temporal, Mailhog, Temporal UI
+├── docker-compose.yml             # Temporal, Mailhog, Temporal UI, Redis
 ├── package.json
 ├── tsconfig.json
 ├── pnpm-lock.yaml
@@ -160,7 +162,7 @@ Calendly-clone/
 - **Node.js** (v20+ recommended)
 - **pnpm** (v11.5.2+) - Package manager
 - **PostgreSQL** database (local or hosted)
-- **Docker** & **Docker Compose** (for Temporal, Mailhog, Temporal UI)
+- **Docker** & **Docker Compose** (for Temporal, Mailhog, Temporal UI, Redis)
 
 ### Installation
 
@@ -208,10 +210,9 @@ Calendly-clone/
    GOOGLE_CLIENT_SECRET=your_client_secret
    GOOGLE_REDIRECT_URI=http://localhost:3000/api/google/callback
    GOOGLE_SENDER_EMAIL=your_email@gmail.com
-   GOOGLE_REFRESH_TOKEN=your_refresh_token
    GOOGLE_CALENDAR_ID=primary
    
-   # Redis (Optional)
+   # Redis (Optional - for OAuth token storage and caching)
    REDIS_HOST=localhost
    REDIS_PORT=6379
    ```
@@ -224,6 +225,7 @@ Calendly-clone/
    - **Temporal** (port 7233) - Workflow orchestration
    - **Temporal UI** (port 8080) - Workflow visualization
    - **Mailhog** (ports 1025 SMTP, 8025 UI) - Email testing
+   - **Redis** (port 6379) - Caching and OAuth token storage
 
 5. **Set up the database**
    ```bash
@@ -241,6 +243,8 @@ Calendly-clone/
 
 7. **Start Temporal worker** (in a separate terminal)
    ```bash
+   pnpm dev:worker
+   # or for production
    pnpm temporal:worker
    ```
 
@@ -379,7 +383,7 @@ GET /api/bookings?status=CONFIRMED&from=2026-07-01&to=2026-07-31
 
 | Model | Description |
 |-------|-------------|
-| **User** | Account holder with email, name, slug, timezone, Google Calendar tokens |
+| **User** | Account holder with email, name, slug, timezone |
 | **EventType** | Meeting template (duration, buffers, location, active status) |
 | **AvailabilityRule** | Recurring weekly schedule (weekday, start/end time, timezone) |
 | **AvailabilityException** | One-off date overrides (blocked or custom hours) |
@@ -407,6 +411,8 @@ Slot 1 ───< Booking
 - **BookingStatus**: `PENDING` | `CONFIRMED` | `CANCELLED`
 - **ExceptionType**: `BLOCKED` | `CUSTOM_HOURS`
 - **LocationType**: `online` | `offline` | `phone`
+
+> **Note**: Google OAuth tokens (refresh tokens) are stored in **Redis** (not in the database) for security. The `google-token.repository.ts` and `google-oauth-state.repository.ts` handle token storage and OAuth state management with TTL-based expiration.
 
 ## 🔐 Authentication
 
@@ -440,18 +446,41 @@ Regenerates slots for the affected date range.
 - **Booking Cancellation**: Sent to invitee when host cancels
 - Uses Nodemailer with SMTP (Mailhog for local development)
 
+## 🔑 Google OAuth Flow (Redis-Based)
+
+The application uses Redis for secure OAuth state and token management:
+
+1. **OAuth State** (`google-oauth-state.repository.ts`):
+   - Generates cryptographically secure nonce (UUID)
+   - Stores `userId` in Redis with 10-minute TTL
+   - State consumed and deleted on callback
+
+2. **Refresh Token Storage** (`google-token.repository.ts`):
+   - Stores refresh token + associated email in Redis
+   - No expiration (persists until explicitly deleted)
+   - Used by Temporal workflows for calendar event creation
+
+3. **Flow**:
+   ```
+   GET /api/google/setup → Returns OAuth URL with state nonce
+   User authorizes → Google redirects to /api/google/callback?state=nonce&code=auth_code
+   Callback → Consumes state, exchanges code for tokens, saves refresh token to Redis
+   ```
+
 ## 📦 Available Scripts
 
 | Command | Description |
 |---------|-------------|
 | `pnpm dev` | Start dev server with hot reload |
+| `pnpm dev:worker` | Start Temporal worker with hot reload |
 | `pnpm build` | Build for production |
 | `pnpm start` | Start production server |
 | `pnpm prisma:generate` | Generate Prisma client |
 | `pnpm prisma:migrate` | Run database migrations |
 | `pnpm prisma:studio` | Open Prisma Studio |
 | `pnpm prisma:format` | Format Prisma schema |
-| `pnpm temporal:worker` | Start Temporal worker |
+| `pnpm temporal:worker` | Start Temporal worker (production) |
+| `pnpm google:setup` | Run Google OAuth CLI setup tool |
 | `pnpm test` | Run tests |
 | `pnpm test:watch` | Run tests in watch mode |
 
@@ -485,6 +514,13 @@ pnpm test:watch
 pnpm test -- tests/unit/your-test.test.ts
 ```
 
+### Google Calendar Setup (CLI)
+```bash
+# Interactive setup to get refresh token
+pnpm google:setup
+```
+This will guide you through OAuth flow and output the refresh token to add to your environment.
+
 ## 🐳 Docker Services
 
 ```bash
@@ -506,6 +542,7 @@ docker-compose down -v
 - **Temporal UI**: `http://localhost:8080`
 - **Mailhog SMTP**: `localhost:1025`
 - **Mailhog UI**: `http://localhost:8025`
+- **Redis**: `localhost:6379`
 
 ## 🔧 Environment Variables Reference
 
@@ -529,7 +566,6 @@ docker-compose down -v
 | `GOOGLE_CLIENT_SECRET` | - | Google OAuth client secret |
 | `GOOGLE_REDIRECT_URI` | - | OAuth redirect URI |
 | `GOOGLE_SENDER_EMAIL` | - | Email for calendar events |
-| `GOOGLE_REFRESH_TOKEN` | - | OAuth refresh token |
 | `GOOGLE_CALENDAR_ID` | `primary` | Calendar ID to use |
 | `REDIS_HOST` | `localhost` | Redis host |
 | `REDIS_PORT` | `6379` | Redis port |
