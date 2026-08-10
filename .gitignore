@@ -147,3 +147,5 @@ PROJECT_CONTEXT.md
 QUANTIFIABLE_METRICS.md
 booking_benchmark.js
 quanify.js
+.notes
+/k8s/secret.yaml

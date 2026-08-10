@@ -1,54 +1,57 @@
 {
-  "name": "Calendly-clone",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "dev": "nodemon --watch src --ext ts --exec 'tsx src/server.ts'",
-    "dev:worker": "nodemon --watch src --ext ts --exec 'tsx src/temporal/worker.ts'",
-    "prisma:format": "prisma format",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:generate": "prisma generate",
-    "google:setup": "tsx src/utils/google-setup.ts"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "^11.5.2",
-      "onFail": "download"
+    "name": "Calendly-clone",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "dev": "nodemon --watch src --ext ts --exec 'tsx src/server.ts'",
+        "dev:worker": "nodemon --watch src --ext ts --exec 'tsx src/temporal/worker.ts'",
+        "prisma:format": "prisma format",
+        "prisma:migrate": "prisma migrate dev",
+        "prisma:generate": "prisma generate",
+        "google:setup": "tsx src/utils/google-setup.ts",
+        "build": "prisma generate && tsc",
+        "start": "node dist/src/server.js",
+        "start:worker": "node dist/src/temporal/worker.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devEngines": {
+        "packageManager": {
+            "name": "pnpm",
+            "version": "pnpm@11.5.2",
+            "onFail": "download"
+        }
+    },
+    "type": "module",
+    "dependencies": {
+        "@prisma/adapter-pg": "^7.8.0",
+        "@prisma/client": "^7.8.0",
+        "@temporalio/activity": "^1.20.2",
+        "@temporalio/client": "^1.20.2",
+        "@temporalio/worker": "^1.20.2",
+        "@temporalio/workflow": "^1.20.2",
+        "dotenv": "^17.4.2",
+        "express": "^5.2.1",
+        "googleapis": "^173.0.0",
+        "ioredis": "^5.11.1",
+        "luxon": "^3.7.2",
+        "nodemailer": "^9.0.3",
+        "slug": "^11.0.1",
+        "swagger-jsdoc": "^6.3.0",
+        "swagger-ui-express": "^5.0.1",
+        "zod": "^4.4.3"
+    },
+    "devDependencies": {
+        "@types/express": "^5.0.6",
+        "@types/luxon": "^3.7.2",
+        "@types/node": "^25.9.1",
+        "@types/nodemailer": "^8.0.1",
+        "@types/slug": "^5.0.9",
+        "nodemon": "^3.1.14",
+        "prisma": "^7.8.0",
+        "tsx": "^4.22.4",
+        "typescript": "^6.0.3"
     }
-  },
-  "type": "module",
-  "dependencies": {
-    "@prisma/adapter-pg": "^7.8.0",
-    "@prisma/client": "^7.8.0",
-    "@temporalio/activity": "^1.20.2",
-    "@temporalio/client": "^1.20.2",
-    "@temporalio/worker": "^1.20.2",
-    "@temporalio/workflow": "^1.20.2",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "googleapis": "^173.0.0",
-    "ioredis": "^5.11.1",
-    "luxon": "^3.7.2",
-    "nodemailer": "^9.0.3",
-    "slug": "^11.0.1",
-    "swagger-jsdoc": "^6.3.0",
-    "swagger-ui-express": "^5.0.1",
-    "zod": "^4.4.3"
-  },
-  "devDependencies": {
-    "@types/express": "^5.0.6",
-    "@types/luxon": "^3.7.2",
-    "@types/node": "^25.9.1",
-    "@types/nodemailer": "^8.0.1",
-    "@types/slug": "^5.0.9",
-    "nodemon": "^3.1.14",
-    "prisma": "^7.8.0",
-    "tsx": "^4.22.4",
-    "typescript": "^6.0.3"
-  }
 }
