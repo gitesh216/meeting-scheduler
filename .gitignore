@@ -145,7 +145,7 @@ vite.config.ts.timestamp-*
 /generated/prisma
 PROJECT_CONTEXT.md
 QUANTIFIABLE_METRICS.md
-booking_benchmark.js
 quanify.js
 .notes
 /k8s/secret.yaml
+slot-generation.bench.ts
