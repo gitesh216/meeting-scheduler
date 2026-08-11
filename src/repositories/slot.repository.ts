@@ -1,6 +1,8 @@
 import { prisma } from "../config/database.js";
 import { getDbClient, type DbClient } from "../config/db-client.js";
 
+const LIVE_BOOKING_STATUSES = ["BOOKED", "PENDING"];
+
 export async function findBookedSlotsByHostInRange(
     hostId: number,
     startDate: Date,
@@ -65,16 +67,22 @@ export async function findFutureSlotsByEventTypeInRange(
     return slots;
 }
 
-export async function blockSlot(id: string) {
-    const slot = await prisma.slot.update({
+export async function blockSlot(id: string, db?: DbClient) {
+    const client = getDbClient(db);
+
+    const result = await client.slot.updateMany({
         where: {
             id,
+            status: { notIn: LIVE_BOOKING_STATUSES },
         },
-        data: {
-            status: "BLOCKED",
-        },
+        data: { status: "BLOCKED" },
     });
-    return slot;
+
+    if (result.count === 0) {
+        return undefined;
+    }
+
+    return client.slot.findUnique({ where: { id } });
 }
 
 export async function findSlotById(id: string, db?: DbClient) {
@@ -154,8 +162,10 @@ export async function bulkCreateAvailableSlots(
     hostId: number,
     eventTypeId: number,
     slots: { startAt: Date; endAt: Date }[],
+    db?: DbClient,
 ) {
-    return prisma.slot.createMany({
+    const client = getDbClient(db);
+    return client.slot.createMany({
         data: slots.map((s) => ({
             hostId,
             eventTypeId,
@@ -170,10 +180,14 @@ export async function bulkCreateAvailableSlots(
 export async function bulkUpdateSlotStatuses(
     slotIds: string[],
     status: string,
+    excludeStatuses: string[] = LIVE_BOOKING_STATUSES,
+    db?: DbClient,
 ) {
-    return prisma.slot.updateMany({
+    const client = getDbClient(db);
+    return client.slot.updateMany({
         where: {
             id: { in: slotIds },
+            status: { notIn: excludeStatuses },
         },
         data: { status },
     });
