@@ -195,7 +195,6 @@ export async function listHostBookings(
     const to = query.to
         ? DateTime.fromISO(query.to, { zone: "utc" }).endOf("day").toJSDate()
         : undefined;
-
     const bookings = await findHostBookings(hostId, {
         status: query.status,
         from,
